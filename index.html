@@ -4,125 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traffic Signal</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background: #1e1e1e;
-            font-family: Arial, sans-serif;
-        }
 
-        .traffic-light {
-            width: 100px;
-            height: 300px;
-            background: #333;
-            border-radius: 10px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            align-items: center;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            transition: all 0.5s ease;
-        }
-
-        .light {
-            width: 60px;
-            height: 60px;
-            background: #444;
-            border-radius: 50%;
-            transition: background 0.5s, box-shadow 0.5s;
-        }
-
-        .light.red {
-            background: #f00;
-            box-shadow: 0 0 50px 15px rgba(255, 0, 0, 0.8);
-        }
-
-        .light.yellow {
-            background: #ff0;
-            box-shadow: 0 0 50px 15px rgba(255, 255, 0, 0.8);
-        }
-
-        .light.green {
-            background: #0f0;
-            box-shadow: 0 0 50px 15px rgba(0, 255, 0, 0.8);
-        }
-
-        button {
-            margin-top: 60px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <!-- CSS Link -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div class="traffic-light" id="traffic-light">
         <div class="light" id="red-light"></div>
         <div class="light" id="yellow-light"></div>
         <div class="light" id="green-light"></div>
     </div>
+
     <button id="toggle-layout">Switch to Horizontal</button>
 
-    <script>
-        const redLight = document.getElementById('red-light');
-        const yellowLight = document.getElementById('yellow-light');
-        const greenLight = document.getElementById('green-light');
-        const trafficLight = document.getElementById('traffic-light');
-        const toggleButton = document.getElementById('toggle-layout');
-
-        let currentLight = 0; // 0 = red, 1 = yellow, 2 = green
-        let isVertical = true; // Initial layout is vertical
-
-        function changeLight() {
-            redLight.classList.remove('red');
-            yellowLight.classList.remove('yellow');
-            greenLight.classList.remove('green');
-
-            if (currentLight === 0) {
-                redLight.classList.add('red');
-                currentLight = 1;
-            } else if (currentLight === 1) {
-                yellowLight.classList.add('yellow');
-                currentLight = 2;
-            } else {
-                greenLight.classList.add('green');
-                currentLight = 0;
-            }
-        }
-
-        function toggleLayout() {
-            if (isVertical) {
-                trafficLight.style.flexDirection = 'row';
-                trafficLight.style.width = '300px';
-                trafficLight.style.height = '100px';
-                toggleButton.textContent = 'Vertical';
-            } else {
-                trafficLight.style.flexDirection = 'column';
-                trafficLight.style.width = '100px';
-                trafficLight.style.height = '300px';
-                toggleButton.textContent = 'Horizontal';
-            }
-            isVertical = !isVertical;
-        }
-
-        toggleButton.addEventListener('click', toggleLayout);
-
-        setInterval(changeLight, 350); // Change light every 2 seconds
-    </script>
+    <!-- JS Link -->
+    <script src="script.js"></script>
 </body>
 </html>
