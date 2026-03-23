@@ -42,4 +42,4 @@ function toggleLayout() {
 toggleButton.addEventListener('click', toggleLayout);
 
 // NOTE: তুমি 350ms দিয়েছো, এটা খুব fast
-setInterval(changeLight, 2000);
+setInterval(changeLight, 350);
