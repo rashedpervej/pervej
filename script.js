@@ -1,45 +1,23 @@
-const redLight = document.getElementById('red-light');
-const yellowLight = document.getElementById('yellow-light');
-const greenLight = document.getElementById('green-light');
-const trafficLight = document.getElementById('traffic-light');
-const toggleButton = document.getElementById('toggle-layout');
+async function loadProjects() {
+  const res = await fetch(
+    "https://ugwx1ss2.api.sanity.io/v2023-01-01/data/query/production?query=*[_type=='project']"
+  );
 
-let currentLight = 0; // 0 = red, 1 = yellow, 2 = green
-let isVertical = true; // Initial layout is vertical
+  const data = await res.json();
 
-function changeLight() {
-    redLight.classList.remove('red');
-    yellowLight.classList.remove('yellow');
-    greenLight.classList.remove('green');
+  const container = document.getElementById("projects");
 
-    if (currentLight === 0) {
-        redLight.classList.add('red');
-        currentLight = 1;
-    } else if (currentLight === 1) {
-        yellowLight.classList.add('yellow');
-        currentLight = 2;
-    } else {
-        greenLight.classList.add('green');
-        currentLight = 0;
-    }
+  data.result.forEach((p) => {
+    const div = document.createElement("div");
+    div.className = "project";
+
+    div.innerHTML = `
+      <h2>${p.title}</h2>
+      <p>${p.description}</p>
+    `;
+
+    container.appendChild(div);
+  });
 }
 
-function toggleLayout() {
-    if (isVertical) {
-        trafficLight.style.flexDirection = 'row';
-        trafficLight.style.width = '300px';
-        trafficLight.style.height = '100px';
-        toggleButton.textContent = 'Vertical';
-    } else {
-        trafficLight.style.flexDirection = 'column';
-        trafficLight.style.width = '100px';
-        trafficLight.style.height = '300px';
-        toggleButton.textContent = 'Horizontal';
-    }
-    isVertical = !isVertical;
-}
-
-toggleButton.addEventListener('click', toggleLayout);
-
-// NOTE: তুমি 350ms দিয়েছো, এটা খুব fast
-setInterval(changeLight, 350);
+loadProjects();
