@@ -1,15 +1,19 @@
 async function loadProjects() {
   try {
     const res = await fetch(
-      'https://ugwx1ss2.api.sanity.io/v2023-01-01/data/query/production?query=*[_type=="project"]'
+      "https://ugwx1ss2.api.sanity.io/v2023-01-01/data/query/production?query=*[_type==\"project\"]"
     );
+
+    if (!res.ok) {
+      throw new Error("Network response was not ok");
+    }
 
     const data = await res.json();
 
-    console.log(data); // debug check
+    console.log(data);
 
     const container = document.getElementById("projects");
-    container.innerHTML = ""; // clear আগে
+    container.innerHTML = "";
 
     if (!data.result || data.result.length === 0) {
       container.innerHTML = "<p>No projects found</p>";
@@ -29,7 +33,7 @@ async function loadProjects() {
     });
 
   } catch (error) {
-    console.error("Error:", error);
+    console.error(error);
     document.getElementById("projects").innerHTML =
       "<p style='color:red'>Failed to load data</p>";
   }
