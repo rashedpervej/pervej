@@ -1,21 +1,16 @@
-import { useEffect, useState } from "react";
-import { getProjects } from "./sanity";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Portfolio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-export default function Home() {
-  const [projects, setProjects] = useState([]);
+  <h1>My Projects</h1>
 
-  useEffect(() => {
-    getProjects().then(setProjects);
-  }, []);
+  <div id="projects"></div>
 
-  return (
-    <div>
-      {projects.map((p) => (
-        <div key={p._id}>
-          <h2>{p.title}</h2>
-          <p>{p.description}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
+  <script src="script.js"></script>
+</body>
+</html>
