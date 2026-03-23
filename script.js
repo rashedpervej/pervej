@@ -1,23 +1,38 @@
 async function loadProjects() {
-  const res = await fetch(
-    "https://ugwx1ss2.api.sanity.io/v2023-01-01/data/query/production?query=*[_type=='project']"
-  );
+  try {
+    const res = await fetch(
+      'https://ugwx1ss2.api.sanity.io/v2023-01-01/data/query/production?query=*[_type=="project"]'
+    );
 
-  const data = await res.json();
+    const data = await res.json();
 
-  const container = document.getElementById("projects");
+    console.log(data); // debug check
 
-  data.result.forEach((p) => {
-    const div = document.createElement("div");
-    div.className = "project";
+    const container = document.getElementById("projects");
+    container.innerHTML = ""; // clear আগে
 
-    div.innerHTML = `
-      <h2>${p.title}</h2>
-      <p>${p.description}</p>
-    `;
+    if (!data.result || data.result.length === 0) {
+      container.innerHTML = "<p>No projects found</p>";
+      return;
+    }
 
-    container.appendChild(div);
-  });
+    data.result.forEach((p) => {
+      const div = document.createElement("div");
+      div.className = "project";
+
+      div.innerHTML = `
+        <h2>${p.title || "No title"}</h2>
+        <p>${p.description || "No description"}</p>
+      `;
+
+      container.appendChild(div);
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+    document.getElementById("projects").innerHTML =
+      "<p style='color:red'>Failed to load data</p>";
+  }
 }
 
 loadProjects();
