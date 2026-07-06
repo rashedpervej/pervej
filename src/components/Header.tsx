@@ -49,7 +49,7 @@ export default function Header() {
       .join("\n\n");
 
     const cvContent = `=====================================================
-RASHED PERVEJ — SENIOR VISUALIZER & ART DIRECTOR
+RASHED PERVEJ — SENIOR VISUALIZER
 =====================================================
 Role: Senior Visualizer & Graphic Designer
 Headline: Brand Identity | Motion Graphics | Packaging
