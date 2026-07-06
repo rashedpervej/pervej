@@ -90,7 +90,7 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-zinc-400 text-sm sm:text-base max-w-xl font-sans leading-relaxed mb-8"
           >
-            Senior Art Director & Visualizer with <span className="text-purple-300 font-medium">6+ years of premium experience</span>. Specialize in high-impact brand identities, modern motion graphics, and tactical food supplement packaging.
+            Senior Visualizer with <span className="text-purple-300 font-medium">6+ years of premium experience</span>. Specialize in high-impact brand identities, modern motion graphics, and tactical food supplement packaging.
           </motion.p>
 
           {/* CTA Buttons */}
