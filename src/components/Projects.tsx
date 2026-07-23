@@ -33,9 +33,9 @@ function ProjectCard({ project, settings }: ProjectCardProps) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
         />
 
-        {/* Tech/Tag Pills inside overlay */}
+        {/* Tech/Tag Pills inside overlay - hidden on mobile UI */}
         {settings.showProjectTags && project.tags && project.tags.length > 0 && (
-          <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap gap-1.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute bottom-4 left-4 right-4 z-20 hidden sm:flex flex-wrap gap-1.5 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             {project.tags.slice(0, 3).map((tag, i) => (
               <span key={i} className="px-2 py-0.5 rounded-md bg-purple-600/90 text-[9px] font-mono font-medium text-white">
                 {tag}
