@@ -1,14 +1,43 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { usePortfolio } from "../context/PortfolioContext";
-import { Palette, Box, Film, ShieldAlert, ArrowUpRight, HelpCircle } from "lucide-react";
+import { Palette, Box, Film, ShieldAlert } from "lucide-react";
 import FormattedText from "./FormattedText";
+import { Service } from "../data";
+import brandHeaderImage from "../assets/images/brand-header.webp";
+import packagingHeaderImage from "../assets/images/packeging-header.webp";
+import motionHeaderImage from "../assets/images/motion-header.webp";
+import mentorHeaderImage from "../assets/images/mentor-header.webp";
 
-export default function Services() {
-  const { portfolioData } = usePortfolio();
-  const services = portfolioData.services;
+const getFallbackImage = (title: string, index: number) => {
+  const normalized = (title || "").toLowerCase();
+  if (normalized.includes("brand")) return brandHeaderImage;
+  if (normalized.includes("packag") || normalized.includes("packeg")) return packagingHeaderImage;
+  if (normalized.includes("motion") || normalized.includes("video")) return motionHeaderImage;
+  if (normalized.includes("direction") || normalized.includes("ops") || normalized.includes("mentor") || normalized.includes("creative")) return mentorHeaderImage;
 
-  const getServiceIcon = (index: number) => {
-    switch (index) {
+  switch (index) {
+    case 0:
+      return brandHeaderImage;
+    case 1:
+      return packagingHeaderImage;
+    case 2:
+      return motionHeaderImage;
+    default:
+      return mentorHeaderImage;
+  }
+};
+
+function ServiceCard({ service, index }: { service: Service; index: number; key?: React.Key }) {
+  const fallback = getFallbackImage(service.title || "", index);
+  const primaryImage = service.image || fallback;
+  const [imgSrc, setImgSrc] = useState(primaryImage);
+
+  useEffect(() => {
+    setImgSrc(service.image || fallback);
+  }, [service.image, fallback]);
+
+  const getServiceIcon = (idx: number) => {
+    switch (idx) {
       case 0:
         return <Palette className="w-6 h-6 text-purple-400" />;
       case 1:
@@ -19,6 +48,58 @@ export default function Services() {
         return <ShieldAlert className="w-6 h-6 text-emerald-400" />;
     }
   };
+
+  return (
+    <div className="rounded-2xl bg-[#0c0c12]/40 border border-white/5 hover:border-purple-500/20 transition-all duration-500 group flex flex-col justify-between text-left overflow-hidden h-full">
+      <div>
+        {/* Premium Image Banner at the top of the card */}
+        <div className="relative w-full h-[155px] overflow-hidden bg-zinc-900 border-b border-white/5">
+          <img
+            src={imgSrc}
+            onError={() => setImgSrc(fallback)}
+            alt={service.title}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+
+          {/* Overlaid Icon (bottom-left of the image banner) */}
+          <div className="absolute bottom-3 left-4 w-10 h-10 rounded-xl bg-black/80 flex items-center justify-center border border-white/15 shadow-lg group-hover:bg-purple-600/10 group-hover:border-purple-500/30 transition-all duration-300 backdrop-blur-sm">
+            {getServiceIcon(index)}
+          </div>
+        </div>
+
+        {/* Content Area with custom padding */}
+        <div className="p-6 sm:p-8">
+          <h3 className="font-display font-semibold text-xl text-white group-hover:text-purple-300 transition-colors mb-3">
+            <FormattedText content={service.title} />
+          </h3>
+          <div className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-1">
+            <FormattedText content={service.description} />
+          </div>
+        </div>
+      </div>
+
+      {/* Skills/Bullets list, positioned at the bottom of the card */}
+      <div className="px-6 sm:px-8 pb-6 sm:pb-8">
+        <div className="w-full h-[1px] bg-white/5 mb-4" />
+        <div className="flex flex-wrap gap-2">
+          {service.skills.map((skill, sIdx) => (
+            <span
+              key={sIdx}
+              className="px-2.5 py-1 rounded-md bg-white/[0.02] border border-white/5 text-[10px] font-mono text-zinc-300 group-hover:bg-purple-500/10 group-hover:text-purple-300 group-hover:border-purple-500/10 transition-colors"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Services() {
+  const { portfolioData } = usePortfolio();
+  const services = portfolioData.services;
 
   return (
     <section id="services" className="py-24 bg-[#030303] relative overflow-hidden">
@@ -40,58 +121,7 @@ export default function Services() {
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {services.map((service, index) => (
-            <div
-              key={index}
-              className="rounded-2xl bg-[#0c0c12]/40 border border-white/5 hover:border-purple-500/20 transition-all duration-500 group flex flex-col justify-between text-left overflow-hidden h-full"
-            >
-              <div>
-                {/* Premium Image Banner at the top of the card */}
-                <div className="relative w-full h-[155px] overflow-hidden bg-zinc-900 border-b border-white/5">
-                  {service.image ? (
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-950/20 to-indigo-950/20 flex items-center justify-center">
-                      <span className="text-zinc-600 font-mono text-[10px] uppercase tracking-wider">No cover image</span>
-                    </div>
-                  )}
-
-                  {/* Overlaid Icon (bottom-left of the image banner) */}
-                  <div className="absolute bottom-3 left-4 w-10 h-10 rounded-xl bg-black/80 flex items-center justify-center border border-white/15 shadow-lg group-hover:bg-purple-600/10 group-hover:border-purple-500/30 transition-all duration-300 backdrop-blur-sm">
-                    {getServiceIcon(index)}
-                  </div>
-                </div>
-
-                {/* Content Area with custom padding */}
-                <div className="p-6 sm:p-8">
-                  <h3 className="font-display font-semibold text-xl text-white group-hover:text-purple-300 transition-colors mb-3">
-                    <FormattedText content={service.title} />
-                  </h3>
-                  <div className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-1">
-                    <FormattedText content={service.description} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Skills/Bullets list, positioned at the bottom of the card */}
-              <div className="px-6 sm:px-8 pb-6 sm:pb-8">
-                <div className="w-full h-[1px] bg-white/5 mb-4" />
-                <div className="flex flex-wrap gap-2">
-                  {service.skills.map((skill, sIdx) => (
-                    <span
-                      key={sIdx}
-                      className="px-2.5 py-1 rounded-md bg-white/[0.02] border border-white/5 text-[10px] font-mono text-zinc-300 group-hover:bg-purple-500/10 group-hover:text-purple-300 group-hover:border-purple-500/10 transition-colors"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <ServiceCard key={index} service={service} index={index} />
           ))}
         </div>
       </div>

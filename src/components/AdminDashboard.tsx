@@ -47,7 +47,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
-  const { sections, isPreviewMode, setIsPreviewMode, refreshData } = usePortfolio();
+  const { sections, setSections, isPreviewMode, setIsPreviewMode, refreshData } = usePortfolio();
   
   // Navigation states
   const [activeTab, setActiveTab] = useState<string>("overview");

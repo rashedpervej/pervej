@@ -40,7 +40,11 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       }
     } catch (err: any) {
       console.error("Auth error:", err);
-      setError(err.message || "Invalid credentials or authentication error.");
+      let errorMsg = err.message || "Invalid credentials or authentication error.";
+      if (typeof errorMsg === "string" && (errorMsg.includes("Failed to fetch") || errorMsg.includes("fetch"))) {
+        errorMsg = "Unable to connect to Supabase auth server (Failed to fetch). Please check your internet connection or verify your Supabase project status and configuration in Admin Settings.";
+      }
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }

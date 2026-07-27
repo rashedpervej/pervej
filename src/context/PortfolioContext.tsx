@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { portfolioData as fallbackData } from "../data";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import defaultResumePdf from "../assets/CV/Rashed Pervej _ Resume _ Jul 26.pdf";
 
 export interface SectionRecord {
   id: string;
@@ -145,6 +146,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       seoDescription: "Portfolio of Rashed Pervej, Senior Visualizer specializing in Brand Identity, Packaging, and Motion Design.",
       seoKeywords: "portfolio, designer, visualizer, packaging, branding, motion graphics, bangladesh",
       enableChatbot: true,
+      cvUrl: defaultResumePdf,
+      cvFileName: "Rashed Pervej _ Resume _ Jul 26.pdf",
       projectSettings: {
         showCategoryFilters: true,
         showFilterAll: true,

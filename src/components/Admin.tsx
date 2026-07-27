@@ -25,7 +25,11 @@ export default function Admin() {
       }
 
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.warn("Supabase session check error:", error);
+        }
+        const currentSession = data?.session || null;
         setSession(currentSession);
         
         if (currentSession?.user) {

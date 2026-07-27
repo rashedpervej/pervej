@@ -4,6 +4,7 @@ import { ArrowDown, Award, Zap, Paintbrush, Play } from "lucide-react";
 import { usePortfolio } from "../context/PortfolioContext";
 import { scrollToSection } from "../utils/scroll";
 import FormattedText from "./FormattedText";
+import defaultHeaderImage from "../assets/images/Rashed Header Image.webp";
 
 // Simple custom hook to handle counter animations
 function AnimatedCounter({ value, duration = 2 }: { value: string; duration?: number }) {
@@ -39,6 +40,13 @@ function AnimatedCounter({ value, duration = 2 }: { value: string; duration?: nu
 export default function Hero() {
   const { portfolioData } = usePortfolio();
   const info = portfolioData.personalInfo || {};
+
+  const primaryImage = info.portraitImage || info.heroImage || info.avatar || defaultHeaderImage;
+  const [imgSrc, setImgSrc] = useState(primaryImage);
+
+  useEffect(() => {
+    setImgSrc(primaryImage);
+  }, [primaryImage]);
 
   // Name splitting for second word coloring
   const fullDisplayName = info.name || "Rashed Pervej";
@@ -198,7 +206,8 @@ export default function Hero() {
 
             {/* Portrait Image */}
             <img
-              src={info.portraitImage || info.heroImage || info.avatar || "https://i.ibb.co.com/Hf2cC3WR/Generated-Image-September-05-2025-12-33-AM-1.jpg"}
+              src={imgSrc}
+              onError={() => setImgSrc(defaultHeaderImage)}
               alt={info.name || "Rashed Pervej"}
               className="absolute inset-0 w-full h-full object-cover object-center filter brightness-95 contrast-105 group-hover:scale-105 transition-transform duration-700"
             />

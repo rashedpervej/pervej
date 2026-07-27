@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { usePortfolio, SectionRecord } from "../context/PortfolioContext";
 import { Save, Plus, Trash, ArrowUp, ArrowDown, Upload, CheckCircle, AlertCircle, Edit, ListOrdered, Eye, Send, EyeOff, LayoutGrid, ZoomIn, ZoomOut, RotateCcw, X, Loader2, Check, Clock, Sparkles } from "lucide-react";
 import RichTextControl from "./RichTextControl";
+import defaultHeaderImage from "../assets/images/Rashed Header Image.webp";
 
 interface AdminSectionEditorProps {
   sectionKey: string;
@@ -369,7 +370,7 @@ export default function AdminSectionEditor({ sectionKey, isDemo = false }: Admin
           brandsLabel: "Selected Brands",
           creativeAssetsCount: "200+",
           assetsLabel: "Creative Assets",
-          portraitImage: "https://i.ibb.co.com/Hf2cC3WR/Generated-Image-September-05-2025-12-33-AM-1.jpg"
+          portraitImage: defaultHeaderImage
         };
       case "about":
         return { aboutSummary: "", aboutDetail: "", location: "" };
@@ -1925,9 +1926,16 @@ function ImageCropperModal({ imageUrl, fileName, onClose, onCropSave, isDemo = f
         const croppedDataUrl = canvas.toDataURL("image/jpeg", 0.92);
 
         if (isSupabaseConfigured && supabase && !isDemo) {
-          // Convert to Blob for direct Supabase Storage upload
-          const res = await fetch(croppedDataUrl);
-          const blob = await res.blob();
+          // Convert to Blob for direct Supabase Storage upload without fetch(dataUrl)
+          const arr = croppedDataUrl.split(",");
+          const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+          const bstr = atob(arr[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+          }
+          const blob = new Blob([u8arr], { type: mime });
           
           const fileExt = fileName.split(".").pop() || "jpg";
           const uniqueName = `cropped-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;

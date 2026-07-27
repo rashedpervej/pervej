@@ -1,3 +1,9 @@
+import defaultHeaderImage from "./assets/images/Rashed Header Image.webp";
+import brandHeaderImage from "./assets/images/brand-header.webp";
+import packagingHeaderImage from "./assets/images/packeging-header.webp";
+import motionHeaderImage from "./assets/images/motion-header.webp";
+import mentorHeaderImage from "./assets/images/mentor-header.webp";
+
 export interface Project {
   id: string;
   title: string;
@@ -61,7 +67,7 @@ export const portfolioData = {
     primaryCtaLink: "#projects",
     secondaryCtaText: "Get In Touch",
     secondaryCtaLink: "#contact",
-    portraitImage: "https://i.ibb.co.com/Hf2cC3WR/Generated-Image-September-05-2025-12-33-AM-1.jpg",
+    portraitImage: defaultHeaderImage,
     email: "rashedpervej2011@gmail.com",
     phone: "+8801932623969",
     linkedin: "linkedin.com/in/rpervej",
@@ -174,25 +180,25 @@ export const portfolioData = {
       title: "Brand Identity Design",
       description: "Crafting comprehensive and high-impact visual identities. We design logos, choose brand typography, build color palettes, and compile solid brand guideline books that help companies stand out.",
       skills: ["Logo Design", "Styleguides", "Brand Books", "Stationery"],
-      image: "https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80"
+      image: brandHeaderImage
     },
     {
       title: "Premium Packaging & Print",
       description: "Designing end-to-end tactile experiences. Delivering print-ready, high-resolution visual layouts for food supplements, consumer healthcare products, and retail merchandise.",
       skills: ["Label Design", "Dielines", "3D Visualization", "Pre-press Coordination"],
-      image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=600&q=80"
+      image: packagingHeaderImage
     },
     {
       title: "Motion Graphics & Promo Videos",
       description: "Bringing static concepts to life with professional video storytelling. High-energy advertisements, short-form Reels, explainer videos, and interactive social content.",
       skills: ["After Effects", "Short-form Editing", "Explainer Videos", "Visual Effects"],
-      image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80"
+      image: motionHeaderImage
     },
     {
       title: "Creative Direction & Design Ops",
       description: "Leading creative teams from project ideation to flawless execution. Ensuring supreme production quality, optimized workflows, and complete consistency across channels.",
       skills: ["Team Mentoring", "Design Strategy", "Client Relations", "Workflow Optimization"],
-      image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&q=80"
+      image: mentorHeaderImage
     }
   ] as Service[],
   projects: [

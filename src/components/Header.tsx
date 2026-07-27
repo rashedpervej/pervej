@@ -4,6 +4,7 @@ import { Menu, X, Download } from "lucide-react";
 import { usePortfolio } from "../context/PortfolioContext";
 import { scrollToSection } from "../utils/scroll";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import defaultResumePdf from "../assets/CV/Rashed Pervej _ Resume _ Jul 26.pdf";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -69,10 +70,10 @@ export default function Header() {
 
   const downloadCV = async () => {
     const cvSource = siteSettings.cvSource || "upload";
-    const url = siteSettings.cvUrl;
+    const url = siteSettings.cvUrl || defaultResumePdf;
     
     // Original filename configured by user or fallback
-    let fileName = siteSettings.cvFileName?.trim() || "Rashed_Pervej_CV.pdf";
+    let fileName = siteSettings.cvFileName?.trim() || "Rashed Pervej _ Resume _ Jul 26.pdf";
     if (!fileName.toLowerCase().endsWith(".pdf")) {
       fileName += ".pdf";
     }
@@ -84,18 +85,13 @@ export default function Header() {
       timestamp: new Date().toISOString(),
     });
 
-    if (!url) {
-      alert("CV document has not been uploaded or configured yet. Please upload a PDF in Admin Settings.");
-      return;
-    }
-
     setIsDownloading(true);
 
     try {
       let blob: Blob | null = null;
 
       // 1. If stored in Supabase 'cv' bucket, download via Supabase Client API to avoid CORS and raw URL exposure
-      if (isSupabaseConfigured && supabase && (url.includes("/storage/v1/object/") || url.includes("/cv/"))) {
+      if (siteSettings.cvUrl && isSupabaseConfigured && supabase && (url.includes("/storage/v1/object/") || url.includes("/cv/"))) {
         try {
           let storagePath = "";
           if (url.includes("/storage/v1/object/public/cv/")) {
@@ -122,11 +118,57 @@ export default function Header() {
 
       // 2. Fallback to direct fetch to blob if not loaded via Supabase SDK or if url is a data URL / external URL
       if (!blob) {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch CV file. Server returned status ${response.status}`);
+        if (url.startsWith("data:")) {
+          try {
+            const arr = url.split(",");
+            const mime = arr[0].match(/:(.*?);/)?.[1] || "application/pdf";
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            blob = new Blob([u8arr], { type: mime });
+          } catch (e) {
+            console.warn("Error converting data URL to blob:", e);
+          }
+        } else {
+          try {
+            const response = await fetch(url);
+            if (response.ok) {
+              blob = await response.blob();
+            }
+          } catch (fetchErr) {
+            console.warn("Error fetching CV URL:", fetchErr);
+          }
+
+          if (!blob && url !== defaultResumePdf) {
+            try {
+              console.warn("Falling back to default asset PDF...");
+              const fallbackRes = await fetch(defaultResumePdf);
+              if (fallbackRes.ok) {
+                blob = await fallbackRes.blob();
+              }
+            } catch (fbErr) {
+              console.warn("Failed to fetch default resume PDF:", fbErr);
+            }
+          }
         }
-        blob = await response.blob();
+      }
+
+      if (!blob) {
+        // Direct browser navigation link fallback if blob creation was impossible
+        const link = document.createElement("a");
+        link.href = url || defaultResumePdf;
+        link.download = fileName;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setIsDownloading(false);
+        return;
       }
 
       // Ensure blob content type is application/pdf for consistency
