@@ -1,0 +1,1135 @@
+/**
+ * Complete Local Fallback Dataset
+ * Generated from live Supabase DB content to guarantee 100% offline resilience,
+ * zero layout shift, and instant rendering even if the database is unreachable.
+ * 
+ * DB is the PRIMARY source; this dataset acts as the RELIABLE FALLBACK.
+ */
+
+import { SectionRecord, SiteSettings } from "../context/PortfolioContext";
+import { DEFAULT_BRAND_SVGS } from "../utils/brandLogos";
+
+export interface FaqFallbackItem {
+  id: string;
+  question: string;
+  answer: string;
+  keywords: string[];
+  category: string;
+  status: "published" | "draft";
+}
+
+export const FALLBACK_SECTIONS: SectionRecord[] = [
+  {
+    "id": "a8fa8560-bb9b-42f9-b73e-cf0b3b13a7eb",
+    "key": "hero",
+    "name": "Hero Section",
+    "type": "single",
+    "fields_schema": [
+      {
+        "name": "name",
+        "type": "text"
+      },
+      {
+        "name": "role",
+        "type": "text"
+      },
+      {
+        "name": "headline",
+        "type": "text"
+      },
+      {
+        "name": "availability",
+        "type": "text"
+      },
+      {
+        "name": "experienceYears",
+        "type": "text"
+      }
+    ],
+    "published_content": {
+      "name": "Rashed<div><span style=\"color: rgb(212, 123, 255);\">Pervej</span></div>",
+      "role": "Senior Visualizer",
+      "heroBio": "<span style=\"font-size: 18px;\">Senior Visualizer with <b><span style=\"color: rgb(193, 141, 236);\">6<span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\">+</span></span></span></span><span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\"></span></span></span><span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\"> years of premium experience</span>. </span></b></span><span style=\"font-size: 18px;\">Specialize in high-impact brand identities, modern motion graphics,<span style=\"color: rgb(161, 161, 170);\"> <span style=\"color: rgb(23, 23, 23);\"><span style=\"color: rgb(161, 161, 170);\"><span style=\"color: rgb(255, 255, 255);\">and tactical food supplement packaging.</span></span></span></span><span style=\"color: rgb(23, 23, 23);\"></span></span>",
+      "headline": "Brand Identity | Motion Graphics | Packaging",
+      "availability": "Available for Remote & Hybrid",
+      "portraitImage": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/zlw0sb7d6al-1790072232417.webp",
+      "primaryCtaLink": "https://www.behance.net/rashedpervej",
+      "primaryCtaText": "Explore My Work",
+      "experienceYears": "6+",
+      "secondaryCtaLink": "https://wa.me/8801932623969",
+      "secondaryCtaText": "Get In Touch"
+    },
+    "draft_content": {
+      "name": "Rashed<div><span style=\"color: rgb(212, 123, 255);\">Pervej</span></div>",
+      "role": "Senior Visualizer",
+      "heroBio": "<span style=\"font-size: 18px;\">Senior Visualizer with <b><span style=\"color: rgb(193, 141, 236);\">6<span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\">+</span></span></span></span><span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\"></span></span></span><span style=\"color: rgb(193, 141, 236);\"><span style=\"color: rgb(193, 141, 236);\"> years of premium experience</span>. </span></b></span><span style=\"font-size: 18px;\">Specialize in high-impact brand identities, modern motion graphics,<span style=\"color: rgb(161, 161, 170);\"> <span style=\"color: rgb(23, 23, 23);\"><span style=\"color: rgb(161, 161, 170);\"><span style=\"color: rgb(255, 255, 255);\">and tactical food supplement packaging.</span></span></span></span><span style=\"color: rgb(23, 23, 23);\"></span></span>",
+      "headline": "Brand Identity | Motion Graphics | Packaging",
+      "availability": "Available for Remote & Hybrid",
+      "portraitImage": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/zlw0sb7d6al-1790072232417.webp",
+      "primaryCtaLink": "https://www.behance.net/rashedpervej",
+      "primaryCtaText": "Explore My Work",
+      "experienceYears": "6+",
+      "secondaryCtaLink": "https://wa.me/8801932623969",
+      "secondaryCtaText": "Get In Touch"
+    },
+    "is_visible": true,
+    "order_index": 0
+  },
+  {
+    "id": "fff062d2-1ced-495f-a8a4-03e1d5419d5c",
+    "key": "about",
+    "name": "About Section",
+    "type": "single",
+    "fields_schema": [
+      {
+        "name": "aboutSummary",
+        "type": "textarea"
+      },
+      {
+        "name": "aboutDetail",
+        "type": "textarea"
+      }
+    ],
+    "published_content": {
+      "aboutDetail": "From concept to execution, I transform ideas into cohesive brand experiences through strategic thinking, creative leadership, and modern design systems that drive engagement and business growth.",
+      "aboutSummary": "Senior Visualizer & Graphic Designer with 6+ years of experience across Chaldal Ltd., Sheba Platform Ltd., Go Nature BD, and international clients. I specialize in branding, visual identity, digital marketing, motion graphics, and AI-assisted design, creating impactful visuals that align with business goals."
+    },
+    "draft_content": {
+      "aboutDetail": "From concept to execution, I transform ideas into cohesive brand experiences through strategic thinking, creative leadership, and modern design systems that drive engagement and business growth.",
+      "aboutSummary": "Senior Visualizer & Graphic Designer with 6+ years of experience across Chaldal Ltd., Sheba Platform Ltd., Go Nature BD, and international clients. I specialize in branding, visual identity, digital marketing, motion graphics, and AI-assisted design, creating impactful visuals that align with business goals."
+    },
+    "is_visible": true,
+    "order_index": 1
+  },
+  {
+    "id": "e00bce95-c8e9-4cb4-93b3-09d3fd50e148",
+    "key": "experience",
+    "name": "Experience Section",
+    "type": "collection",
+    "fields_schema": [
+      {
+        "name": "role",
+        "type": "text"
+      },
+      {
+        "name": "company",
+        "type": "text"
+      },
+      {
+        "name": "location",
+        "type": "text"
+      },
+      {
+        "name": "period",
+        "type": "text"
+      },
+      {
+        "name": "type",
+        "type": "text"
+      },
+      {
+        "name": "description",
+        "type": "list"
+      }
+    ],
+    "published_content": [
+      {
+        "role": "Senior Visualizer",
+        "type": "Hybrid",
+        "period": "Feb 2025 – Present",
+        "company": "Go Nature BD",
+        "location": "Jashore, Bangladesh",
+        "description": [
+          "Led the creative team, managing project ideation, visualization, design reviews, approvals, and end-to-end execution across branding and marketing initiatives.",
+          "Established and maintained the company's visual identity, leading packaging design, print-ready artwork, digital marketing assets, and brand consistency across all customer touchpoints.",
+          "Directed creative production for social media, motion graphics, short-form videos, and commercial content while collaborating with marketing and management teams.",
+          "Leveraged AI-powered creative workflows to accelerate ideation, content production, and overall creative efficiency across multiple projects.",
+          "Recruited and mentored designers and video editors while coordinating with printing vendors to ensure premium production quality."
+        ]
+      },
+      {
+        "role": "Visualizer",
+        "type": "Full-Time",
+        "period": "Jan 2024 – Sep 2024",
+        "company": "Sheba Platform Ltd.",
+        "location": "Jashore, Bangladesh",
+        "description": [
+          "Led the Jashore creative team, managing daily design operations and maintaining high creative standards.",
+          "Designed digital and print marketing assets, including paid ads, motion graphics, promotional videos, and brand collateral.",
+          "Delivered creative solutions across ShebaPay, SManager, SBusiness, FinTech, and other business brands while maintaining strict brand consistency.",
+          "Collaborated with marketing teams and presented creative concepts to senior leadership, including the CEO.",
+          "Maintained brand guidelines and optimized creative workflows for timely project delivery."
+        ]
+      },
+      {
+        "role": "Visual Graphic Designer",
+        "type": "Full-Time",
+        "period": "Feb 2020 – Oct 2023",
+        "company": "Chaldal Ltd.",
+        "location": "Jashore, Bangladesh",
+        "description": [
+          "Designed digital and print marketing assets, including social media campaigns, website and app banners, push notifications, email marketing, motion graphics, promotional videos, and print materials.",
+          "Developed campaign concepts and marketing creatives that supported product launches, promotional initiatives, and business growth.",
+          "Led a team of 3 designers, conducting design reviews, mentoring team members, and maintaining high creative standards.",
+          "Collaborated with marketing, product, content, and cross-functional teams to deliver brand-consistent visual communication.",
+          "Conducted annual Information Security (InfoSec) awareness training for the design team and employees across five cross-functional departments."
+        ]
+      },
+      {
+        "role": "Freelance Graphic Designer",
+        "type": "Contract",
+        "period": "2022 – Present",
+        "company": "Self-Employed",
+        "location": "Remote",
+        "description": [
+          "Delivered branding, logo identity, packaging, social media, and marketing design solutions for clients across Bangladesh, Belgium, the Czech Republic, and the United States.",
+          "Collaborated remotely with startups, agencies, and established businesses, translating complex business goals into clean and effective visual communication."
+        ]
+      },
+      {
+        "role": "Founder & Computer Trainer",
+        "type": "Owner",
+        "period": "2015 – 2019",
+        "company": "Rashed IT & Computer Training Center",
+        "location": "Jashore, Bangladesh",
+        "description": [
+          "Delivered Basic Trade computer training covering Microsoft Office applications and computer fundamentals.",
+          "Mentored learners through practical, hands-on training to develop workplace-ready digital skills."
+        ]
+      }
+    ],
+    "draft_content": [
+      {
+        "role": "Senior Visualizer",
+        "type": "Hybrid",
+        "period": "Feb 2025 – Present",
+        "company": "Go Nature BD",
+        "location": "Jashore, Bangladesh",
+        "description": [
+          "Led the creative team, managing project ideation, visualization, design reviews, approvals, and end-to-end execution across branding and marketing initiatives.",
+          "Established and maintained the company's visual identity, leading packaging design, print-ready artwork, digital marketing assets, and brand consistency across all customer touchpoints.",
+          "Directed creative production for social media, motion graphics, short-form videos, and commercial content while collaborating with marketing and management teams.",
+          "Leveraged AI-powered creative workflows to accelerate ideation, content production, and overall creative efficiency across multiple projects.",
+          "Recruited and mentored designers and video editors while coordinating with printing vendors to ensure premium production quality."
+        ]
+      },
+      {
+        "role": "Visualizer",
+        "type": "Full-Time",
+        "period": "Jan 2024 – Sep 2024",
+        "company": "Sheba Platform Ltd.",
+        "location": "Jashore, Bangladesh",
+        "description": [
+          "Led the Jashore creative team, managing daily design operations and maintaining high creative standards.",
+          "Designed digital and print marketing assets, including paid ads, motion graphics, promotional videos, and brand collateral.",
+          "Delivered creative solutions across ShebaPay, SManager, SBusiness, FinTech, and other business brands while maintaining strict brand consistency.",
+          "Collaborated with marketing teams and presented creative concepts to senior leadership, including the CEO.",
+          "Maintained brand guidelines and optimized creative workflows for timely project delivery."
+        ]
+      },
+      {
+        "role": "Visual Graphic Designer",
+        "type": "Full-Time",
+        "period": "Feb 2020 – Oct 2023",
+        "company": "Chaldal Ltd.",
+        "location": "Jashore, Bangladesh",
+        "description": [
+          "Designed digital and print marketing assets, including social media campaigns, website and app banners, push notifications, email marketing, motion graphics, promotional videos, and print materials.",
+          "Developed campaign concepts and marketing creatives that supported product launches, promotional initiatives, and business growth.",
+          "Led a team of 3 designers, conducting design reviews, mentoring team members, and maintaining high creative standards.",
+          "Collaborated with marketing, product, content, and cross-functional teams to deliver brand-consistent visual communication.",
+          "Conducted annual Information Security (InfoSec) awareness training for the design team and employees across five cross-functional departments."
+        ]
+      },
+      {
+        "role": "Freelance Graphic Designer",
+        "type": "Contract",
+        "period": "2022 – Present",
+        "company": "Self-Employed",
+        "location": "Remote",
+        "description": [
+          "Delivered branding, logo identity, packaging, social media, and marketing design solutions for clients across Bangladesh, Belgium, the Czech Republic, and the United States.",
+          "Collaborated remotely with startups, agencies, and established businesses, translating complex business goals into clean and effective visual communication."
+        ]
+      },
+      {
+        "role": "Founder & Computer Trainer",
+        "type": "Owner",
+        "period": "2015 – 2019",
+        "company": "Rashed IT & Computer Training Center",
+        "location": "Jashore, Bangladesh",
+        "description": [
+          "Delivered Basic Trade computer training covering Microsoft Office applications and computer fundamentals.",
+          "Mentored learners through practical, hands-on training to develop workplace-ready digital skills."
+        ]
+      }
+    ],
+    "is_visible": true,
+    "order_index": 2
+  },
+  {
+    "id": "90b6ef88-52c3-4c6e-97c7-c75ae7f63218",
+    "key": "skills",
+    "name": "Skills Section",
+    "type": "single",
+    "fields_schema": [
+      {
+        "name": "coreCompetencies",
+        "type": "list"
+      },
+      {
+        "name": "creativeTools",
+        "type": "object_list"
+      }
+    ],
+    "published_content": {
+      "creativeTools": [
+        {
+          "name": "Adobe Photoshop",
+          "level": 95
+        },
+        {
+          "name": "Adobe Illustrator",
+          "level": 90
+        },
+        {
+          "name": "Adobe After Effects",
+          "level": 85
+        },
+        {
+          "name": "Canva",
+          "level": 84
+        },
+        {
+          "name": "CapCut",
+          "level": 83
+        },
+        {
+          "name": "WordPress",
+          "level": 75
+        },
+        {
+          "name": "AI-Assisted Design",
+          "level": 90
+        }
+      ],
+      "coreCompetencies": [
+        "Brand Identity",
+        "Visual Design & Storytelling",
+        "Packaging & Print Design",
+        "Motion Graphics",
+        "Team Leadership",
+        "Creative Direction",
+        "AI-Assisted Design",
+        "UI/UX Visuals"
+      ]
+    },
+    "draft_content": {
+      "creativeTools": [
+        {
+          "name": "Adobe Photoshop",
+          "level": 95
+        },
+        {
+          "name": "Adobe Illustrator",
+          "level": 90
+        },
+        {
+          "name": "Adobe After Effects",
+          "level": 85
+        },
+        {
+          "name": "Canva",
+          "level": 84
+        },
+        {
+          "name": "CapCut",
+          "level": 83
+        },
+        {
+          "name": "WordPress",
+          "level": 75
+        },
+        {
+          "name": "AI-Assisted Design",
+          "level": 90
+        }
+      ],
+      "coreCompetencies": [
+        "Brand Identity",
+        "Visual Design & Storytelling",
+        "Packaging & Print Design",
+        "Motion Graphics",
+        "Team Leadership",
+        "Creative Direction",
+        "AI-Assisted Design",
+        "UI/UX Visuals"
+      ]
+    },
+    "is_visible": true,
+    "order_index": 3
+  },
+  {
+    "id": "08f33fbc-0046-4df2-b463-0876fe016516",
+    "key": "brands",
+    "name": "Brands Section",
+    "type": "collection",
+    "fields_schema": [
+      {
+        "name": "name",
+        "type": "text"
+      },
+      {
+        "name": "logoText",
+        "type": "text"
+      },
+      {
+        "name": "market",
+        "type": "text"
+      }
+    ],
+    "published_content": [
+      {
+        "name": "Chaldal PLC",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://www.startupbangladesh.vc/wp-content/uploads/2021/07/Chaldal-BrandID-2021.png",
+        "logoText": "Chaldal Ltd.",
+        "brandName": "Chaldal PLC"
+      },
+      {
+        "name": "Sheba PLC",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/3lxg0naxa7s-1790089097394.webp",
+        "logoText": "Sheba Platform Ltd.",
+        "brandName": "Sheba PLC"
+      },
+      {
+        "name": "Go Nature",
+        "market": "Bangladesh",
+        "logoText": "Go Nature BD"
+      },
+      {
+        "name": "Basumati Group",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/u83r8ei5e6e-1790089582695.jpg",
+        "logoText": "Basumati Group",
+        "brandName": "Basumati Group"
+      },
+      {
+        "name": "Heavens Group",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/8v9n3706w4g-1790089745623.jpg",
+        "logoText": "Heavens Group",
+        "brandName": "Heavens Group"
+      },
+      {
+        "name": "Zettabyte Technology",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/7motfur53gp-1790088776669.png",
+        "logoText": "Zettabyte Technology Ltd.",
+        "brandName": "Zettabyte Technology"
+      },
+      {
+        "name": "Amiras Dental",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/srlv1oegfi-1790088671025.webp",
+        "logoText": "Amiras Dental",
+        "brandName": "Amiras Dental"
+      },
+      {
+        "name": "Dream Advice",
+        "market": "Belgium",
+        "logoText": "Dream Advice"
+      },
+      {
+        "name": "Lake Powell Promotions",
+        "market": "USA",
+        "country": "USA",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/j10bt84a3g-1790090082206.webp",
+        "logoText": "Lake Powell Promotions",
+        "brandName": "Lake Powell Promotions"
+      },
+      {
+        "name": "Page Party Bounce Co.",
+        "market": "USA",
+        "country": "USA",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/iigoud0ipfq-1790089960303.webp",
+        "logoText": "Page Party Bounce Co.",
+        "brandName": "Page Party Bounce Co."
+      },
+      {
+        "name": "Food Collection",
+        "market": "Bangladesh",
+        "logoText": "Food Collection Ltd."
+      }
+    ],
+    "draft_content": [
+      {
+        "name": "Chaldal PLC",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://www.startupbangladesh.vc/wp-content/uploads/2021/07/Chaldal-BrandID-2021.png",
+        "logoText": "Chaldal Ltd.",
+        "brandName": "Chaldal PLC"
+      },
+      {
+        "name": "Sheba PLC",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/3lxg0naxa7s-1790089097394.webp",
+        "logoText": "Sheba Platform Ltd.",
+        "brandName": "Sheba PLC"
+      },
+      {
+        "name": "Go Nature",
+        "market": "Bangladesh",
+        "logoText": "Go Nature BD"
+      },
+      {
+        "name": "Basumati Group",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/u83r8ei5e6e-1790089582695.jpg",
+        "logoText": "Basumati Group",
+        "brandName": "Basumati Group"
+      },
+      {
+        "name": "Heavens Group",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/8v9n3706w4g-1790089745623.jpg",
+        "logoText": "Heavens Group",
+        "brandName": "Heavens Group"
+      },
+      {
+        "name": "Zettabyte Technology",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/7motfur53gp-1790088776669.png",
+        "logoText": "Zettabyte Technology Ltd.",
+        "brandName": "Zettabyte Technology"
+      },
+      {
+        "name": "Amiras Dental",
+        "market": "Bangladesh",
+        "country": "Bangladesh",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/srlv1oegfi-1790088671025.webp",
+        "logoText": "Amiras Dental",
+        "brandName": "Amiras Dental"
+      },
+      {
+        "name": "Dream Advice",
+        "market": "Belgium",
+        "logoText": "Dream Advice"
+      },
+      {
+        "name": "Lake Powell Promotions",
+        "market": "USA",
+        "country": "USA",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/j10bt84a3g-1790090082206.webp",
+        "logoText": "Lake Powell Promotions",
+        "brandName": "Lake Powell Promotions"
+      },
+      {
+        "name": "Page Party Bounce Co.",
+        "market": "USA",
+        "country": "USA",
+        "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/iigoud0ipfq-1790089960303.webp",
+        "logoText": "Page Party Bounce Co.",
+        "brandName": "Page Party Bounce Co."
+      },
+      {
+        "name": "Food Collection",
+        "market": "Bangladesh",
+        "logoText": "Food Collection Ltd."
+      }
+    ],
+    "is_visible": true,
+    "order_index": 4
+  },
+  {
+    "id": "88ff8a94-d7bf-4cfc-982a-e81514f358b0",
+    "key": "services",
+    "name": "Services Section",
+    "type": "collection",
+    "fields_schema": [
+      {
+        "name": "title",
+        "type": "text"
+      },
+      {
+        "name": "description",
+        "type": "textarea"
+      },
+      {
+        "name": "skills",
+        "type": "list"
+      }
+    ],
+    "published_content": [
+      {
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/cropped-5efdld4vbb9-1785164120876.webp",
+        "title": "Brand Identity Design",
+        "skills": [
+          "Logo Design",
+          "Styleguides",
+          "Brand Books",
+          "Stationery"
+        ],
+        "description": [
+          "Crafting comprehensive and high-impact visual identities. We design logos, choose brand typography, build color palettes, and compile solid brand guideline books that help companies stand out."
+        ]
+      },
+      {
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/cropped-mswf1womxv-1785164137532.webp",
+        "title": "Premium Packaging & Print",
+        "skills": [
+          "Label Design",
+          "Dielines",
+          "3D Visualization",
+          "Pre-press Coordination"
+        ],
+        "description": [
+          "Designing end-to-end tactile experiences. Delivering print-ready, high-resolution visual layouts for food supplements, consumer healthcare products, and retail merchandise."
+        ]
+      },
+      {
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/cropped-iitb5ce50jc-1785164149396.webp",
+        "title": "Motion Graphics & Promo Videos",
+        "skills": [
+          "After Effects",
+          "Short-form Editing",
+          "Explainer Videos",
+          "Visual Effects"
+        ],
+        "description": [
+          "Bringing static concepts to life with professional video storytelling. High-energy advertisements, short-form Reels, explainer videos, and interactive social content."
+        ]
+      },
+      {
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/cropped-84vw60t6ze3-1785164161637.webp",
+        "title": "Creative Direction & Design Ops",
+        "skills": [
+          "Team Mentoring",
+          "Design Strategy",
+          "Client Relations",
+          "Workflow Optimization"
+        ],
+        "description": [
+          "Leading creative teams from project ideation to flawless execution. Ensuring supreme production quality, optimized workflows, and complete consistency across channels."
+        ]
+      }
+    ],
+    "draft_content": [
+      {
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/cropped-5efdld4vbb9-1785164120876.webp",
+        "title": "Brand Identity Design",
+        "skills": [
+          "Logo Design",
+          "Styleguides",
+          "Brand Books",
+          "Stationery"
+        ],
+        "description": [
+          "Crafting comprehensive and high-impact visual identities. We design logos, choose brand typography, build color palettes, and compile solid brand guideline books that help companies stand out."
+        ]
+      },
+      {
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/cropped-mswf1womxv-1785164137532.webp",
+        "title": "Premium Packaging & Print",
+        "skills": [
+          "Label Design",
+          "Dielines",
+          "3D Visualization",
+          "Pre-press Coordination"
+        ],
+        "description": [
+          "Designing end-to-end tactile experiences. Delivering print-ready, high-resolution visual layouts for food supplements, consumer healthcare products, and retail merchandise."
+        ]
+      },
+      {
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/cropped-iitb5ce50jc-1785164149396.webp",
+        "title": "Motion Graphics & Promo Videos",
+        "skills": [
+          "After Effects",
+          "Short-form Editing",
+          "Explainer Videos",
+          "Visual Effects"
+        ],
+        "description": [
+          "Bringing static concepts to life with professional video storytelling. High-energy advertisements, short-form Reels, explainer videos, and interactive social content."
+        ]
+      },
+      {
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/cropped-84vw60t6ze3-1785164161637.webp",
+        "title": "Creative Direction & Design Ops",
+        "skills": [
+          "Team Mentoring",
+          "Design Strategy",
+          "Client Relations",
+          "Workflow Optimization"
+        ],
+        "description": [
+          "Leading creative teams from project ideation to flawless execution. Ensuring supreme production quality, optimized workflows, and complete consistency across channels."
+        ]
+      }
+    ],
+    "is_visible": true,
+    "order_index": 5
+  },
+  {
+    "id": "e9b2abe1-237c-4da7-9bcb-7fc17f0e068f",
+    "key": "projects",
+    "name": "Projects",
+    "type": "collection",
+    "fields_schema": [
+      {
+        "name": "id",
+        "type": "text"
+      },
+      {
+        "name": "title",
+        "type": "text"
+      },
+      {
+        "name": "category",
+        "type": "text"
+      },
+      {
+        "name": "description",
+        "type": "textarea"
+      },
+      {
+        "name": "tags",
+        "type": "list"
+      },
+      {
+        "name": "image",
+        "type": "image"
+      },
+      {
+        "name": "year",
+        "type": "text"
+      }
+    ],
+    "published_content": [
+      {
+        "id": "item-gqg9f7i1ah",
+        "link": "",
+        "tags": [],
+        "year": "2025",
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/vez8xyzttak-1785168598864.webp",
+        "title": "Go Nature Wellness Brand Identity",
+        "liveUrl": "",
+        "category": "Brand Design",
+        "toolsUsed": "",
+        "awardBadge": "",
+        "behanceUrl": "",
+        "clientName": "",
+        "description": [
+          "Designed premium packaging and a cohesive visual identity for a healthcare supplement brand."
+        ],
+        "projectDuration": "",
+        "serviceProvided": "Packaging & Brand Design"
+      },
+      {
+        "id": "item-urufsli1ui",
+        "link": "",
+        "tags": [],
+        "year": "2023",
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/80qkqrefeuw-1785168646345.webp",
+        "title": "Chaldal Grocery & Campaigns",
+        "liveUrl": "",
+        "category": "Brand Design",
+        "toolsUsed": "",
+        "awardBadge": "",
+        "behanceUrl": "",
+        "clientName": "",
+        "description": [
+          "Created digital campaigns, promotional assets, and marketing visuals for Bangladesh's leading online grocery platform."
+        ],
+        "projectDuration": "",
+        "serviceProvided": "Digital Marketing & Campaigns"
+      },
+      {
+        "id": "item-fasqb7amxxm",
+        "link": "",
+        "tags": [],
+        "year": "2024",
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/vbrvmzre33-1785168503669.png",
+        "title": "Sheba Platform Digital Identity System",
+        "liveUrl": "",
+        "category": "Branding & Print",
+        "toolsUsed": "",
+        "awardBadge": "",
+        "behanceUrl": "",
+        "clientName": "",
+        "description": [
+          "Produced brand assets, motion graphics, and digital visuals for FinTech and consumer services."
+        ],
+        "projectDuration": "",
+        "serviceProvided": "Social Media & Motions"
+      }
+    ],
+    "draft_content": [
+      {
+        "id": "item-gqg9f7i1ah",
+        "link": "",
+        "tags": [],
+        "year": "2025",
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/vez8xyzttak-1785168598864.webp",
+        "title": "Go Nature Wellness Brand Identity",
+        "liveUrl": "",
+        "category": "Brand Design",
+        "toolsUsed": "",
+        "awardBadge": "",
+        "behanceUrl": "",
+        "clientName": "",
+        "description": [
+          "Designed premium packaging and a cohesive visual identity for a healthcare supplement brand."
+        ],
+        "projectDuration": "",
+        "serviceProvided": "Packaging & Brand Design"
+      },
+      {
+        "id": "item-urufsli1ui",
+        "link": "",
+        "tags": [],
+        "year": "2023",
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/80qkqrefeuw-1785168646345.webp",
+        "title": "Chaldal Grocery & Campaigns",
+        "liveUrl": "",
+        "category": "Brand Design",
+        "toolsUsed": "",
+        "awardBadge": "",
+        "behanceUrl": "",
+        "clientName": "",
+        "description": [
+          "Created digital campaigns, promotional assets, and marketing visuals for Bangladesh's leading online grocery platform."
+        ],
+        "projectDuration": "",
+        "serviceProvided": "Digital Marketing & Campaigns"
+      },
+      {
+        "id": "item-fasqb7amxxm",
+        "link": "",
+        "tags": [],
+        "year": "2024",
+        "image": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/vbrvmzre33-1785168503669.png",
+        "title": "Sheba Platform Digital Identity System",
+        "liveUrl": "",
+        "category": "Branding & Print",
+        "toolsUsed": "",
+        "awardBadge": "",
+        "behanceUrl": "",
+        "clientName": "",
+        "description": [
+          "Produced brand assets, motion graphics, and digital visuals for FinTech and consumer services."
+        ],
+        "projectDuration": "",
+        "serviceProvided": "Social Media & Motions"
+      }
+    ],
+    "is_visible": true,
+    "order_index": 6
+  },
+  {
+    "id": "fad4e271-6eb2-4961-9bea-d7fa35651814",
+    "key": "testimonials",
+    "name": "Testimonials Section",
+    "type": "collection",
+    "fields_schema": [
+      {
+        "name": "quote",
+        "type": "textarea"
+      },
+      {
+        "name": "author",
+        "type": "text"
+      },
+      {
+        "name": "company",
+        "type": "text"
+      },
+      {
+        "name": "role",
+        "type": "text"
+      }
+    ],
+    "published_content": [
+      {
+        "role": "Strategic Partner",
+        "quote": "Rashed is an exceptional creative force. His ability to lead a design team while keeping up immaculate, print-ready packaging layouts and outstanding video motion graphics elevated our products significantly.",
+        "author": "Creative Director",
+        "company": "Go Nature BD"
+      },
+      {
+        "role": "Campaign Lead",
+        "quote": "Working with Rashed during his years at Chaldal was a masterclass in collaboration. He is detail-oriented, highly skilled with Adobe Suite, and has an innate sense of aesthetic balance and visual storytelling.",
+        "author": "Marketing Manager",
+        "company": "Chaldal Ltd."
+      },
+      {
+        "role": "Client",
+        "quote": "He handled our international brand elements with incredible professionalism. Despite being remote, communication was crystal clear, and the assets exceeded our expectations.",
+        "author": "Founder",
+        "company": "Dream Advice (Belgium)"
+      }
+    ],
+    "draft_content": [
+      {
+        "role": "Strategic Partner",
+        "quote": "Rashed is an exceptional creative force. His ability to lead a design team while keeping up immaculate, print-ready packaging layouts and outstanding video motion graphics elevated our products significantly.",
+        "author": "Creative Director",
+        "company": "Go Nature BD"
+      },
+      {
+        "role": "Campaign Lead",
+        "quote": "Working with Rashed during his years at Chaldal was a masterclass in collaboration. He is detail-oriented, highly skilled with Adobe Suite, and has an innate sense of aesthetic balance and visual storytelling.",
+        "author": "Marketing Manager",
+        "company": "Chaldal Ltd."
+      },
+      {
+        "role": "Client",
+        "quote": "He handled our international brand elements with incredible professionalism. Despite being remote, communication was crystal clear, and the assets exceeded our expectations.",
+        "author": "Founder",
+        "company": "Dream Advice (Belgium)"
+      }
+    ],
+    "is_visible": true,
+    "order_index": 7
+  },
+  {
+    "id": "68b757af-7b49-42fb-95b4-a896110221a2",
+    "key": "educationCertifications",
+    "name": "Education & Certifications",
+    "type": "collection",
+    "fields_schema": [
+      {
+        "name": "title",
+        "type": "text"
+      },
+      {
+        "name": "institution",
+        "type": "text"
+      },
+      {
+        "name": "period",
+        "type": "text"
+      },
+      {
+        "name": "credentialUrl",
+        "type": "text"
+      }
+    ],
+    "published_content": [
+      {
+        "title": "BSS in Economics",
+        "period": " ",
+        "institution": "National University, Bangladesh",
+        "credentialUrl": ""
+      },
+      {
+        "title": "Foundations of User Experience (UX) Design",
+        "period": " ",
+        "institution": "Coursera | Google",
+        "credentialUrl": ""
+      },
+      {
+        "title": "Color for Design and Art",
+        "period": " ",
+        "institution": "Coursera | California Institute of the Arts",
+        "credentialUrl": ""
+      },
+      {
+        "title": "Digital Marketing Certification",
+        "period": " ",
+        "institution": "LEDP, Government of Bangladesh",
+        "credentialUrl": ""
+      }
+    ],
+    "draft_content": [
+      {
+        "title": "BSS in Economics",
+        "period": " ",
+        "institution": "National University, Bangladesh",
+        "credentialUrl": ""
+      },
+      {
+        "title": "Foundations of User Experience (UX) Design",
+        "period": " ",
+        "institution": "Coursera | Google",
+        "credentialUrl": ""
+      },
+      {
+        "title": "Color for Design and Art",
+        "period": " ",
+        "institution": "Coursera | California Institute of the Arts",
+        "credentialUrl": ""
+      },
+      {
+        "title": "Digital Marketing Certification",
+        "period": " ",
+        "institution": "LEDP, Government of Bangladesh",
+        "credentialUrl": ""
+      }
+    ],
+    "is_visible": true,
+    "order_index": 8
+  },
+  {
+    "id": "17ad89d3-42a1-46d9-b7fa-2ad3e2349ed0",
+    "key": "contact",
+    "name": "Contact Details Section",
+    "type": "single",
+    "fields_schema": [
+      {
+        "name": "email",
+        "type": "text"
+      },
+      {
+        "name": "phone",
+        "type": "text"
+      },
+      {
+        "name": "location",
+        "type": "text"
+      },
+      {
+        "name": "linkedin",
+        "type": "text"
+      },
+      {
+        "name": "behance",
+        "type": "text"
+      }
+    ],
+    "published_content": {
+      "email": "rashedpervej2011@gmail.com",
+      "phone": "+8801932623969",
+      "behance": "be.net/rashedpervej",
+      "linkedin": "linkedin.com/in/rpervej",
+      "location": "Jashore, Bangladesh"
+    },
+    "draft_content": {
+      "email": "rashedpervej2011@gmail.com",
+      "phone": "+8801932623969",
+      "behance": "be.net/rashedpervej",
+      "linkedin": "linkedin.com/in/rpervej",
+      "location": "Jashore, Bangladesh"
+    },
+    "is_visible": true,
+    "order_index": 9
+  }
+];
+
+export const FALLBACK_SITE_SETTINGS: SiteSettings = {
+  "seoTitle": "Rashed Pervej | Senior Visualizer & Graphic Designer | 7+ years",
+  "seoDescription": "Rashed Pervej (7+ years in Design) Senior Visualizer & Graphic Designer. Previously at Chaldal & Sheba.xyz. Specializing in Branding, Packaging and Visual design.",
+  "seoKeywords": "portfolio, designer, visualizer, packaging, branding, motion graphics, bangladesh",
+  "ogTitle": "Rashed Pervej | Senior Visualizer & Graphic Designer | 7+ years",
+  "ogDescription": "Rashed Pervej (7+ years in Design) Senior Visualizer & Graphic Designer. Previously at Chaldal & Sheba.xyz. Specializing in Branding, Packaging and Visual design.",
+  "ogImage": "/og-image.jpg",
+  "ogUrl": "",
+  "backgroundStyle": "liquid",
+  "cvSource": "url",
+  "cvUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/cv/Rashed%20Pervej_Resume_Jul26.pdf",
+  "cvFileName": "Rashed Pervej_Resume_Jul26.pdf",
+  "primaryColor": "#a64dff",
+  "customCss": "",
+  "enableChatbot": false,
+  "marqueeSpeed": 25,
+  "projectSettings": {
+    "showYear": false,
+    "showLiveUrl": false,
+    "showCategory": false,
+    "showServices": false,
+    "showFilterAll": true,
+    "showToolsUsed": false,
+    "showAwardBadge": false,
+    "showBehanceUrl": true,
+    "showClientName": false,
+    "showProjectTags": true,
+    "showFilterMotion": true,
+    "showFilterBranding": true,
+    "showCaseStudyButton": false,
+    "showCategoryFilters": false,
+    "showFilterMarketing": true,
+    "showProjectDuration": false,
+    "showFilterInternational": true
+  },
+  "defaultTheme": "dark"
+};
+
+export const FALLBACK_FAQS: FaqFallbackItem[] = [
+  {
+    "id": "9e5331d3-394c-4708-be84-8bec862e4f79",
+    "question": "What is your current role and company?",
+    "answer": "I am currently working as a Senior Visualizer at Go Nature BD in Bangladesh, leading the creative team, managing brand identity, and packaging designs.",
+    "keywords": [
+      "role",
+      "job",
+      "company",
+      "current"
+    ],
+    "category": "general",
+    "status": "published"
+  },
+  {
+    "id": "40692b12-822b-42a6-b942-cfbf10bad3eb",
+    "question": "How many years of experience do you have?",
+    "answer": "I have over 6 years of professional graphic design and visualization experience across leading tech platforms, corporate entities, and international clients.",
+    "keywords": [
+      "experience",
+      "years",
+      "how long"
+    ],
+    "category": "general",
+    "status": "published"
+  },
+  {
+    "id": "2814eefc-aee4-4871-93b0-025e99fc271b",
+    "question": "What creative tools are you proficient in?",
+    "answer": "I am highly proficient in Adobe Photoshop, Adobe Illustrator, Adobe After Effects, Canva, CapCut, WordPress, and AI-Assisted Design.",
+    "keywords": [
+      "tools",
+      "software",
+      "photoshop",
+      "illustrator",
+      "after effects"
+    ],
+    "category": "technical",
+    "status": "published"
+  },
+  {
+    "id": "c64a08f1-ef65-479e-9bd3-6e5ab9766186",
+    "question": "Where are you located and are you open to remote work?",
+    "answer": "I am based in Jashore, Bangladesh, and I am fully open to OnSite, Remote, and Hybrid roles.",
+    "keywords": [
+      "location",
+      "remote",
+      "hybrid",
+      "where"
+    ],
+    "category": "general",
+    "status": "published"
+  },
+  {
+    "id": "a5577aa1-8928-42b1-ae06-a196275b8d3f",
+    "question": "Can you describe your experience at Chaldal Ltd.?",
+    "answer": "At Chaldal Ltd., I worked as a Visual Graphic Designer for over 3 years (2020-2023), designing multi-channel digital & print marketing assets and leading a team of 3 designers.",
+    "keywords": [
+      "chaldal",
+      "past experience",
+      "history"
+    ],
+    "category": "general",
+    "status": "published"
+  }
+];
