@@ -118,11 +118,12 @@ export default function Hero() {
         {/* Left Column: Core Text */}
         <div className="lg:col-span-7 flex flex-col items-start text-left">
           {/* Tagline / Availability Indicator */}
+                    {/* Tagline / Availability Indicator */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-mono tracking-wider uppercase mb-6 transition-all duration-300 ${
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-mono tracking-wider uppercase mb-6 transition-colors duration-300 ${
               isLight
                 ? "bg-white/70 border border-white/90 text-purple-700 shadow-[0_4px_14px_rgba(147,51,234,0.08),inset_0_1px_1px_rgba(255,255,255,0.95)] backdrop-blur-md"
                 : "bg-purple-500/10 border border-purple-500/20 text-purple-400"
