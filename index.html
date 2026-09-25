@@ -22,6 +22,32 @@
     <meta name="twitter:description" content="Rashed Pervej (7+ years in Design) Senior Visualizer & Graphic Designer. Previously at Chaldal & Sheba.xyz. Specializing in Branding, Packaging and Visual design." />
     <meta name="twitter:image" content="https://pervej-portfolio-v2.vercel.app/og-image.jpg" />
 
+    <!-- Synchronous Theme Initialization to prevent Dark Mode Header Flicker (FOUC) on reload -->
+    <script>
+      (function() {
+        try {
+          var userPref = localStorage.getItem("portfolio_user_theme") || localStorage.getItem("portfolio_theme");
+          var theme = "light";
+          if (userPref === "dark" || userPref === "light") {
+            theme = userPref;
+          } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark";
+          }
+          var root = document.documentElement;
+          if (theme === "dark") {
+            root.classList.add("dark");
+            root.classList.remove("light");
+            root.setAttribute("data-theme", "dark");
+            root.style.colorScheme = "dark";
+          } else {
+            root.classList.add("light");
+            root.classList.remove("dark");
+            root.setAttribute("data-theme", "light");
+            root.style.colorScheme = "light";
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" href="/favicon.ico" />
