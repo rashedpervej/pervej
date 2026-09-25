@@ -280,11 +280,11 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
       const totalLeads = eventsData ? eventsData.filter((e) => e.event_type === "contact_click" || e.event_type === "lead_submit").length : 0;
 
       setStats({
-        pageViews: totalViews || 12,
-        botInteractions: fetchedChats.length,
-        downloads: totalDownloads || 3,
-        leads: totalLeads || 2,
-      });
+  pageViews: totalViews,
+  botInteractions: fetchedChats.length,
+  downloads: totalDownloads,
+  leads: totalLeads,
+});
 
     } catch (err) {
       console.error("Error loading analytics & chats:", err);
