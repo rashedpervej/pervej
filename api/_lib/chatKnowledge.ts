@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { decryptVaultData } from "./vaultCrypto";
+import { decryptVaultData } from "./vaultCrypto.ts";
 
 // Clean, standalone fallbacks for chat knowledge without external frontend ESM dependencies
 const DEFAULT_PERSONAL_INFO = {

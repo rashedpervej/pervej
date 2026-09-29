@@ -26,11 +26,7 @@
       "destination": "/api/leads"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "has": [
         {
           "type": "header",
@@ -41,7 +37,7 @@
       "destination": "/api/socialMeta"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],

@@ -1,4 +1,4 @@
-import { Request } from "express";
+import type { Request } from "express";
 import { createClient } from "@supabase/supabase-js";
 
 export interface AuthResult {

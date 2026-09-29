@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { GoogleGenAI } from "@google/genai";
-import { getPortfolioKnowledge, getStructuredPortfolioData, cleanText } from "./_lib/chatKnowledge";
-import { recordAuditLog, recordTokenUsage } from "./vault";
+import { getPortfolioKnowledge, getStructuredPortfolioData, cleanText } from "./_lib/chatKnowledge.ts";
+import { recordAuditLog, recordTokenUsage } from "./_lib/auditTracker.ts";
 
 function getAvailableApiKeys(dbKey?: string | null): string[] {
   const keys: string[] = [];
@@ -600,7 +600,18 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const { message, history } = req.body || {};
+    let payload = req.body;
+    if (typeof payload === "string") {
+      try {
+        payload = JSON.parse(payload);
+      } catch (e) {}
+    } else if (payload && typeof payload === "object" && Buffer.isBuffer(payload)) {
+      try {
+        payload = JSON.parse(payload.toString("utf-8"));
+      } catch (e) {}
+    }
+
+    const { message, history } = payload || {};
     if (!message || typeof message !== "string" || !message.trim()) {
       return res.status(400).json({ error: "Message must be a non-empty string" });
     }

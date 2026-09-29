@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
-import { readLeadsLocal, writeLeadsLocal, updateLeadLocal, deleteLeadLocal, Lead } from "./_lib/localDb";
+import { readLeadsLocal, writeLeadsLocal, updateLeadLocal, deleteLeadLocal, type Lead } from "./_lib/localDb.ts";
 
 function getSupabase() {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -17,7 +17,7 @@ function getSupabase() {
   return createClient(supabaseUrl, supabaseAnonKey);
 }
 
-import { verifyAdminAuth } from "./_lib/auth";
+import { verifyAdminAuth } from "./_lib/auth.ts";
 
 // GET /api/leads - Merges local leads and Supabase leads (Protected: Admin Only)
 export async function getLeads(req: Request, res: Response) {

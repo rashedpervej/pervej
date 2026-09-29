@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 import { getStructuredPortfolioData } from "./_lib/chatKnowledge";
-import { recordAuditLog, recordTokenUsage } from "./vault";
+import { recordAuditLog, recordTokenUsage } from "./_lib/auditTracker";
 
 export default async function proxyChatCompletionsHandler(req: Request, res: Response) {
   // Support CORS for external web apps calling from anywhere

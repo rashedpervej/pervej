@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 import os from "os";
-import { verifyAdminAuth } from "./_lib/auth";
+import { verifyAdminAuth } from "./_lib/auth.ts";
 
 function getDataPaths() {
   const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);

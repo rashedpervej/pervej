@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
-import { addLeadLocal, updateLeadLocal } from "./_lib/localDb";
+import { addLeadLocal, updateLeadLocal } from "./_lib/localDb.ts";
 
 function getSupabase() {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
