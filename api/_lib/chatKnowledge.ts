@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { decryptVaultData } from "./vaultCrypto.ts";
+import { decryptVaultData } from "./vaultCrypto";
 
 // Clean, standalone fallbacks for chat knowledge without external frontend ESM dependencies
 const DEFAULT_PERSONAL_INFO = {
@@ -203,21 +203,48 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
   if ((!dbAiVault || (Array.isArray(dbAiVault) && dbAiVault.length === 0)) && !dbAiApiKey) {
     const envGroq = process.env.GROQ_API_KEY;
     const envGemini = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-    if (envGroq) {
-      dbAiVault = [
-        {
-          id: "vault_groq_env",
-          provider: "groq",
-          label: "Groq Cloud (Environment)",
-          apiKey: envGroq,
-          model: "openai/gpt-oss-120b",
-          priority: 1,
-          isActive: true,
-        },
-      ];
-    } else if (envGemini) {
-      dbAiApiKey = envGemini;
+    const envVault: any[] = [];
+
+    if (envGroq && typeof envGroq === "string" && envGroq.trim() && !envGroq.startsWith("MY_")) {
+      envVault.push({
+        id: "vault_groq_env",
+        provider: "groq",
+        label: "Groq Cloud (Environment)",
+        apiKey: envGroq.trim(),
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        priority: 1,
+        isActive: true,
+      });
     }
+
+    if (envGemini && typeof envGemini === "string" && envGemini.trim() && !envGemini.startsWith("MY_")) {
+      envVault.push({
+        id: "vault_gemini_env",
+        provider: "gemini",
+        label: "Google Gemini Flash (Environment)",
+        apiKey: envGemini.trim(),
+        model: "gemini-2.0-flash",
+        priority: 2,
+        isActive: true,
+      });
+      dbAiApiKey = envGemini.trim();
+    }
+
+    if (envVault.length > 0) {
+      dbAiVault = envVault;
+    }
+  }
+
+  // 1d. Embedded AES-256-GCM encrypted vault baseline (Zero-Key runtime fallback)
+  if ((!dbAiVault || (Array.isArray(dbAiVault) && dbAiVault.length === 0)) && !dbAiApiKey) {
+    try {
+      const DEFAULT_ENCRYPTED_VAULT =
+        "enc:v1:8ODfwvydgEDDo39w:Z9H2P1RrrgZNteaPU7brGBvtF2dIKVnzG3UbygWaQBpyepiwwzaN/Ce6JgyaGOg/fSnrvhbTk6mDncxMQ6OawdKxBG/DccTDu1QAq3xlbxGJOqYQ0zX8/mmQO9/WRtVLaXLc7VnshXzWqjBndoh4wMEbO4d31F4F7gIcXvBLf0w2uB91AvNtYmaBIXQ9uw1Df87ttFDEGHQsNa3tpq0ljPpT9zxTYq0YZom4CNF9Lw9Z0tn79KGKsTOiOKOIyckZOuMY/0IqOH5rlQDfOa8kVwQbvJpZX9/UdD+F2DRi7JFrbvjCixVbJfP1zV05uVkgCcUJesyd78PatUEMkc5L2oL7IFFqVam9CI5xEw1tVpPtTA==";
+      const decrypted = await decryptVaultData(DEFAULT_ENCRYPTED_VAULT);
+      if (Array.isArray(decrypted) && decrypted.length > 0) {
+        dbAiVault = decrypted;
+      }
+    } catch (e) {}
   }
 
   // 2. Fallback to local snapshot.json if sections not loaded from Supabase

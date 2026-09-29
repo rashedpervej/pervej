@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "timestamp": 1790604905804,
-  "lastSyncIso": "2026-09-28T14:15:05.804Z",
+  "timestamp": 1790613756232,
+  "lastSyncIso": "2026-09-28T16:42:36.232Z",
   "source": "supabase_sync",
   "sections": [
     {
@@ -1103,8 +1103,10 @@
       "cooldownSeconds": 30,
       "temperature": 0.55,
       "maxTokens": 750,
-      "selectedModel": "groq:openai/gpt-oss-120b"
+      "selectedModel": "gemini:gemini-3.8-flash",
+      "contextMode": "full"
     },
-    "defaultTheme": "dark"
+    "defaultTheme": "dark",
+    "ai_audit_logs": "[{\"action\":\"key_deleted\",\"resourceType\":\"key\",\"resourceId\":\"vault_1790609379560\",\"metadata\":{\"providerId\":\"gemini\",\"keyLabel\":\"Gemini API Key 2 -bot - backup\"},\"id\":\"chronicle_1790612549836_2rqi\",\"createdAt\":\"2026-09-28T16:22:29.836Z\"},{\"action\":\"unified_key_created\",\"resourceType\":\"key\",\"resourceId\":\"prec_master\",\"metadata\":{\"keyLabel\":\"Unified Master Key\"},\"id\":\"chronicle_1790612452683_gl9d\",\"createdAt\":\"2026-09-28T16:20:52.683Z\"},{\"action\":\"unified_key_created\",\"resourceType\":\"key\",\"resourceId\":\"prec_master\",\"metadata\":{\"keyLabel\":\"Unified Master Key\"},\"id\":\"chronicle_1790612438791_4nt9\",\"createdAt\":\"2026-09-28T16:20:38.791Z\"}]"
   }
 }

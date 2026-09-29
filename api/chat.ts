@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { GoogleGenAI } from "@google/genai";
-import { getPortfolioKnowledge, getStructuredPortfolioData, cleanText } from "./_lib/chatKnowledge.ts";
-import { recordAuditLog, recordTokenUsage } from "./vault.ts";
+import { getPortfolioKnowledge, getStructuredPortfolioData, cleanText } from "./_lib/chatKnowledge";
+import { recordAuditLog, recordTokenUsage } from "./vault";
 
 function getAvailableApiKeys(dbKey?: string | null): string[] {
   const keys: string[] = [];
@@ -653,9 +653,9 @@ export default async function handler(req: any, res: any) {
       candidates = fallbackKeys.map((k, idx) => ({
         id: `legacy_${idx}`,
         provider: (k.startsWith("gsk_") ? "groq" : "gemini") as any,
-        label: k.startsWith("gsk_") ? "Groq (GPT-OSS 120B Active)" : "Google Gemini Flash",
+        label: k.startsWith("gsk_") ? "Groq (Llama 3.3 70B Active)" : "Google Gemini Flash",
         apiKey: k,
-        model: k.startsWith("gsk_") ? "openai/gpt-oss-120b" : "gemini-3.8-flash",
+        model: k.startsWith("gsk_") ? "llama-3.3-70b-versatile" : "gemini-2.0-flash",
         priority: idx + 1,
       }));
     }
@@ -727,15 +727,16 @@ export default async function handler(req: any, res: any) {
               maxTokens: Math.max(structuredData?.aiRouterSettings?.maxTokens ?? 750, 1500),
             });
           } catch (primaryErr) {
-            // Groq fallback model if primary model has a temporary outage
+            // Groq fallback model if primary model fails
+            const fallbackModel = modelToUse.includes("120b") ? "openai/gpt-oss-20b" : "llama-3.3-70b-versatile";
             groqRes = await callOpenAICompatibleChat({
               endpointUrl: "https://api.groq.com/openai/v1/chat/completions",
               apiKey: candidate.apiKey,
-              model: "openai/gpt-oss-20b",
+              model: fallbackModel,
               systemInstruction,
               contents,
               temperature: 0.55,
-              maxTokens: 1500,
+              maxTokens: 1000,
             });
           }
 
@@ -844,10 +845,10 @@ export default async function handler(req: any, res: any) {
           });
 
           const rawModel = candidate.model?.trim() || "";
-          const modelToUse =
-            !rawModel || rawModel.includes("2.5") || rawModel.includes("2.0") || rawModel.includes("1.5")
-              ? "gemini-3.8-flash"
-              : rawModel;
+          let modelToUse = rawModel || "gemini-3.8-flash";
+          if (modelToUse.includes("llama") || modelToUse.includes("gpt") || modelToUse.includes("qwen") || !modelToUse.startsWith("gemini")) {
+            modelToUse = "gemini-3.8-flash";
+          }
           let response: any = null;
           try {
             response = await ai.models.generateContent({
@@ -860,9 +861,10 @@ export default async function handler(req: any, res: any) {
               },
             });
           } catch (geminiPrimaryErr) {
-            // Fallback model: gemini-3.5-flash
+            // Fallback model if primary model fails
+            const fallbackModel = modelToUse === "gemini-3.8-flash" ? "gemini-2.5-flash" : "gemini-3.8-flash";
             response = await ai.models.generateContent({
-              model: "gemini-3.5-flash",
+              model: fallbackModel,
               contents: contents,
               config: {
                 systemInstruction: systemInstruction,
@@ -913,11 +915,17 @@ export default async function handler(req: any, res: any) {
       ? `হ্যালো! Rashed Pervej-এর ডিজাইন পোর্টফোলিওতে স্বাগতম। Brand Identity, Packaging Design বা Motion Graphics—কোন বিষয়ে জানতে চাচ্ছেন?`
       : `Hello! Welcome to Rashed Pervej's creative portfolio. Are you looking into Brand Identity, Packaging Design, or Motion Graphics?`;
 
-    return res.status(200).json({ text: defaultResponse });
+    return res.status(200).json({
+      text: defaultResponse,
+      provider: "System",
+      tokenUsage: 45,
+    });
   } catch (error: any) {
     console.error("[AI Chat API Error]:", error?.message || error);
     return res.status(200).json({
       text: "Hi! Rashed Pervej is a Senior Visualizer specializing in **Brand Identity**, **Packaging**, and **Motion Graphics**. Reach him directly at **rashedpervej2011@gmail.com** or WhatsApp at **+8801932623969**.",
+      provider: "System",
+      tokenUsage: 35,
     });
   }
 }

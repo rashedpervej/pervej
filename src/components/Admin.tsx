@@ -31,10 +31,18 @@ export default function Admin() {
           console.warn("Supabase session check error:", error);
         }
         const currentSession = data?.session || null;
-        setSession(currentSession);
-        
         if (currentSession?.user) {
-          await fetchUserRole(currentSession.user.id, currentSession.user.email);
+          if (currentSession.user.email !== "rashedpervej2011@gmail.com") {
+            console.warn("Unauthorized user attempted admin access. Terminating session.");
+            await supabase.auth.signOut();
+            setSession(null);
+            setUserRole("editor");
+          } else {
+            setSession(currentSession);
+            await fetchUserRole(currentSession.user.id, currentSession.user.email);
+          }
+        } else {
+          setSession(null);
         }
       } catch (err) {
         console.error("Error checking auth status:", err);
@@ -50,9 +58,14 @@ export default function Admin() {
     if (isSupabaseConfigured && supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (_event, newSession) => {
-          if (newSession) {
-            setSession(newSession);
-            if (newSession?.user) {
+          if (newSession?.user) {
+            if (newSession.user.email !== "rashedpervej2011@gmail.com") {
+              console.warn("Unauthorized user authenticated. Revoking session.");
+              await supabase.auth.signOut();
+              setSession(null);
+              setUserRole("editor");
+            } else {
+              setSession(newSession);
               await fetchUserRole(newSession.user.id, newSession.user.email);
             }
           } else {
@@ -74,8 +87,8 @@ export default function Admin() {
   const fetchUserRole = async (userId: string, email?: string) => {
     if (!supabase) return;
 
-    // Auto-promote the owner to admin role
-    if (email === "rashedpervej2011@gmail.com" || email === "admin@portfolio.com") {
+    // Strict single admin validation
+    if (email === "rashedpervej2011@gmail.com") {
       setUserRole("admin");
       try {
         await supabase
@@ -87,29 +100,22 @@ export default function Admin() {
       return;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("id", userId)
-        .single();
-
-      if (data && !error) {
-        setUserRole(data.role as "admin" | "editor");
-      } else {
-        // If no explicit role in user_roles table, default to editor
-        setUserRole("editor");
-      }
-    } catch (err) {
-      console.warn("Failed to fetch user role from table. Defaulting to Editor.", err);
-      setUserRole("editor");
-    }
+    // Any other user is unauthorized
+    setUserRole("editor");
+    await supabase.auth.signOut();
+    setSession(null);
   };
 
-  const handleLoginSuccess = (newSession: any) => {
+  const handleLoginSuccess = async (newSession: any) => {
+    if (newSession?.user?.email !== "rashedpervej2011@gmail.com") {
+      if (supabase) await supabase.auth.signOut();
+      setSession(null);
+      alert("Access Denied: Only the authorized portfolio administrator can access this panel.");
+      return;
+    }
     setSession(newSession);
     if (newSession?.user) {
-      fetchUserRole(newSession.user.id, newSession.user.email);
+      await fetchUserRole(newSession.user.id, newSession.user.email);
     }
   };
 

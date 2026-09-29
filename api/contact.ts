@@ -177,6 +177,7 @@ export default async function contactHandler(req: Request, res: Response) {
     }
 
     // 2. Send email notification to rashedpervej2011@gmail.com
+    const resendApiKey = process.env.RESEND_API_KEY;
     const smtpHost = process.env.SMTP_HOST;
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
     const smtpUser = process.env.SMTP_USER;
@@ -188,33 +189,6 @@ export default async function contactHandler(req: Request, res: Response) {
     let previewUrl = "";
 
     try {
-      let transporter;
-      if (smtpHost && smtpUser && smtpPass) {
-        transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: {
-            user: smtpUser,
-            pass: smtpPass
-          }
-        });
-        console.log(`Using custom SMTP server: ${smtpHost}:${smtpPort}`);
-      } else {
-        console.log("SMTP environment variables not configured. Creating Ethereal sandbox test account...");
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-          host: testAccount.smtp.host,
-          port: testAccount.smtp.port,
-          secure: testAccount.smtp.secure,
-          auth: {
-            user: testAccount.user,
-            pass: testAccount.pass
-          }
-        });
-        console.log("Created Ethereal test account successfully.");
-      }
-
       const submissionTime = new Date().toISOString();
       const submissionTimeStr = new Date().toLocaleString("en-US", { timeZone: "UTC" }) + " UTC";
 
@@ -268,50 +242,94 @@ export default async function contactHandler(req: Request, res: Response) {
         </div>
       `;
 
-      const mailOptions = {
-        from: smtpHost ? smtpFrom : `"Portfolio Leads" <${transporter.options.auth?.user}>`,
-        to: "rashedpervej2011@gmail.com",
-        subject: `📩 [New Lead] ${subject} - from ${name}`,
-        text: `New Lead Submission Received:\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "Not specified"}\nCompany: ${company || "Not specified"}\nSubject: ${subject}\nMessage: ${message}\nTime: ${submissionTimeStr}\nIP: ${ip}`,
-        html: emailHtml
-      };
+      if (resendApiKey) {
+        // High-priority: Send email via Resend API
+        const resendFrom = process.env.RESEND_FROM || "Portfolio Contact <onboarding@resend.dev>";
+        const resendResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            from: resendFrom,
+            to: ["rashedpervej2011@gmail.com"],
+            reply_to: email,
+            subject: `📩 [New Lead] ${subject} - from ${name}`,
+            text: `New Lead Submission Received:\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "Not specified"}\nCompany: ${company || "Not specified"}\nSubject: ${subject}\nMessage: ${message}\nTime: ${submissionTimeStr}\nIP: ${ip}`,
+            html: emailHtml
+          })
+        });
 
-      const info = await transporter.sendMail(mailOptions);
-      emailSent = true;
+        if (!resendResponse.ok) {
+          const errBody = await resendResponse.json().catch(() => ({}));
+          throw new Error(`Resend API HTTP ${resendResponse.status}: ${JSON.stringify(errBody)}`);
+        }
 
-      if (!smtpHost) {
+        const resendData = await resendResponse.json();
+        console.log(`Email dispatched via Resend API. ID: ${resendData?.id}`);
+        emailSent = true;
+      } else if (smtpHost && smtpUser && smtpPass) {
+        // Secondary: Send via configured SMTP server
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: {
+            user: smtpUser,
+            pass: smtpPass
+          }
+        });
+
+        const mailOptions = {
+          from: smtpFrom,
+          to: "rashedpervej2011@gmail.com",
+          subject: `📩 [New Lead] ${subject} - from ${name}`,
+          text: `New Lead Submission Received:\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "Not specified"}\nCompany: ${company || "Not specified"}\nSubject: ${subject}\nMessage: ${message}\nTime: ${submissionTimeStr}\nIP: ${ip}`,
+          html: emailHtml
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`Email dispatched via custom SMTP. MessageId: ${info.messageId}`);
+        emailSent = true;
+      } else if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+        // Local developer sandbox fallback only (never used in production)
+        const testAccount = await nodemailer.createTestAccount();
+        const transporter = nodemailer.createTransport({
+          host: testAccount.smtp.host,
+          port: testAccount.smtp.port,
+          secure: testAccount.smtp.secure,
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass
+          }
+        });
+
+        const info = await transporter.sendMail({
+          from: `"Portfolio Leads" <${testAccount.user}>`,
+          to: "rashedpervej2011@gmail.com",
+          subject: `📩 [New Lead] ${subject} - from ${name}`,
+          text: `New Lead Submission Received:\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "Not specified"}\nCompany: ${company || "Not specified"}\nSubject: ${subject}\nMessage: ${message}\nTime: ${submissionTimeStr}\nIP: ${ip}`,
+          html: emailHtml
+        });
         previewUrl = nodemailer.getTestMessageUrl(info) || "";
-        console.log(`Ethereal email preview available at: ${previewUrl}`);
+        console.log(`Local dev Ethereal preview: ${previewUrl}`);
+        emailSent = true;
       } else {
-        console.log(`Email successfully dispatched. MessageId: ${info.messageId}`);
+        console.warn("No RESEND_API_KEY or SMTP credentials configured on production. Lead recorded to database.");
       }
     } catch (mailErr: any) {
       console.error("Failed to send email notification:", mailErr);
       emailErrorMsg = mailErr.message || "Failed to send email";
     }
 
-    // 3. Post-save update: if we used Ethereal, append the preview URL to the local database and Supabase lead's notes
-    // so that the admin can view and test the email directly from the dashboard!
-    if (previewUrl && dbSuccess && insertedRecord) {
+    if (previewUrl && dbSuccess && insertedRecord && process.env.NODE_ENV !== "production") {
       try {
-        const noteText = `Demo Sandbox: Click to view email notification that arrived: ${previewUrl}`;
-        
-        // Update locally
+        const noteText = `Local Dev Sandbox: ${previewUrl}`;
         updateLeadLocal(insertedRecord.id, { notes: noteText });
         insertedRecord.notes = noteText;
-
-        if (supabase) {
-          if (savedMethod === "local_and_supabase_leads") {
-            await supabase
-              .from("leads")
-              .update({ notes: noteText })
-              .eq("email", email)
-              .eq("subject", subject);
-          }
-        }
-        console.log("Successfully appended Ethereal test inbox preview link to local and database record notes.");
       } catch (updateErr) {
-        console.warn("Failed to write email preview URL back to database notes:", updateErr);
+        console.warn("Failed to write test preview to local note:", updateErr);
       }
     }
 

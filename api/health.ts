@@ -67,7 +67,6 @@ export default async function healthHandler(req: Request, res: Response) {
       },
       local_db: {
         status: localDbStatus,
-        leads_count: localLeadsCount
       }
     };
 
@@ -124,7 +123,6 @@ export default async function healthHandler(req: Request, res: Response) {
       },
       local_db: {
         status: localDbStatus,
-        leads_count: localLeadsCount
       }
     };
 
@@ -152,7 +150,6 @@ export default async function healthHandler(req: Request, res: Response) {
       },
       local_db: {
         status: localDbStatus,
-        leads_count: localLeadsCount
       }
     };
 

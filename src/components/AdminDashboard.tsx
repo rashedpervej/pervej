@@ -143,6 +143,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [chatLogs, setChatLogs] = useState<any[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
+  const [isDemoChats, setIsDemoChats] = useState(false);
   const [explorerFilter, setExplorerFilter] = useState<"all" | "liked" | "disliked" | "unanswered" | "handoff">("all");
   
   // Leads Management states
@@ -417,8 +418,10 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
 
         if (chatsData && !chatsError && chatsData.length > 0) {
           fetchedChats = chatsData;
+          setIsDemoChats(false);
         } else {
           fetchedChats = demoChats;
+          setIsDemoChats(true);
         }
       } catch (dbErr) {
         console.warn("Direct chatbot_interactions table fetch failed, fetching from analytics_events fallback...");
@@ -448,11 +451,13 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
               conversation_id: details.conversation_id || "",
             };
           });
+          setIsDemoChats(false);
         }
       }
 
       if (!fetchedChats || fetchedChats.length === 0) {
         fetchedChats = demoChats;
+        setIsDemoChats(true);
       }
 
       setChatLogs(fetchedChats);
@@ -1793,17 +1798,27 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                 </div>
               </div>
 
+              {/* Demo Preview Notice */}
+              {isDemoChats && (
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs text-purple-300">
+                  <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                  <span>
+                    <strong>Preview Mode:</strong> No live visitor conversations recorded in Supabase yet. Showing preview template logs. When visitors chat with your AI, live prompts, responses, latencies, and token counts will automatically record here.
+                  </span>
+                </div>
+              )}
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-zinc-800 text-[10px] uppercase font-mono text-zinc-500 tracking-wider">
-                      <th className="py-3 px-4">Timestamp</th>
-                      <th className="py-3 px-4">User Prompt / Event</th>
-                      <th className="py-3 px-4">AI Response / Context</th>
-                      <th className="py-3 px-4">Source & Tags</th>
-                      <th className="py-3 px-4 text-right">Latency</th>
-                      <th className="py-3 px-4 text-right">Tokens</th>
-                      <th className="py-3 px-4">Session / Conv ID</th>
+                      <th className="py-3 px-4 min-w-[130px]">Timestamp (BST)</th>
+                      <th className="py-3 px-4 min-w-[180px]">User Prompt / Event</th>
+                      <th className="py-3 px-4 min-w-[240px]">AI Response / Context</th>
+                      <th className="py-3 px-4 min-w-[130px]">Source &amp; Tags</th>
+                      <th className="py-3 px-4 text-right min-w-[95px]">Latency</th>
+                      <th className="py-3 px-4 text-right min-w-[95px]">Tokens</th>
+                      <th className="py-3 px-4 min-w-[110px]">Session / Conv ID</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/50 text-xs">
@@ -1824,12 +1839,17 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
 
                         return (
                           <tr key={log.id} className="hover:bg-zinc-900/20 transition-colors">
-                            <td className="py-3.5 px-4 font-mono text-[10px] text-zinc-500 whitespace-nowrap">
-                              {new Date(log.timestamp).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                            <td className="py-3.5 px-4 font-mono text-[10px] text-zinc-400 whitespace-nowrap">
+                              {new Date(log.timestamp).toLocaleString("en-GB", {
+                                timeZone: "Asia/Dhaka",
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              })}{" "}
+                              BST
                             </td>
-                            <td className="py-3.5 px-4 text-zinc-200 max-w-xs truncate" title={log.question}>
-                              <div className="flex items-center gap-1.5">
-                                <span className="truncate">{log.question}</span>
+                            <td className="py-3.5 px-4 text-zinc-200 max-w-xs" title={log.question}>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="truncate max-w-[200px]">{log.question}</span>
                                 {reasonTag && (
                                   <span className="shrink-0 px-2 py-0.5 rounded-full text-[9px] font-mono font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30">
                                     Reason: {reasonTag}
@@ -1837,8 +1857,10 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                                 )}
                               </div>
                             </td>
-                            <td className={`py-3.5 px-4 max-w-xs truncate ${hasErr ? "text-amber-400 font-medium" : "text-zinc-400"}`} title={log.answer}>
-                              {log.answer}
+                            <td className={`py-3.5 px-4 max-w-sm ${hasErr ? "text-amber-400 font-medium" : "text-zinc-300"}`} title={log.answer}>
+                              <p className="line-clamp-2 leading-relaxed text-xs">
+                                {log.answer || "—"}
+                              </p>
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-1.5 flex-wrap">
@@ -1855,7 +1877,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                                     ? "bg-zinc-800 text-zinc-300 border border-zinc-700"
                                     : "bg-blue-950/60 text-blue-300 border border-blue-500/30"
                                 }`}>
-                                  {log.response_source}
+                                  {log.response_source || "AI"}
                                 </span>
                                 {isLiked && (
                                   <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
@@ -1874,11 +1896,23 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
                                 )}
                               </div>
                             </td>
-                            <td className="py-3.5 px-4 text-right font-mono text-[11px] text-zinc-400">
-                              {log.response_time_ms ? `${log.response_time_ms} ms` : "-"}
+                            <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                              {log.response_time_ms ? (
+                                <span className="px-2 py-0.5 rounded font-mono text-[10px] bg-zinc-800/90 text-emerald-400 border border-emerald-500/20 inline-block font-semibold">
+                                  {log.response_time_ms} ms
+                                </span>
+                              ) : (
+                                <span className="text-zinc-600 font-mono text-xs">—</span>
+                              )}
                             </td>
-                            <td className="py-3.5 px-4 text-right font-mono text-[11px] text-zinc-400">
-                              {log.token_usage || "-"}
+                            <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                              {log.token_usage ? (
+                                <span className="px-2 py-0.5 rounded font-mono text-[10px] bg-purple-950/60 text-purple-300 border border-purple-500/30 inline-block font-semibold">
+                                  {log.token_usage} tok
+                                </span>
+                              ) : (
+                                <span className="text-zinc-600 font-mono text-xs">—</span>
+                              )}
                             </td>
                             <td className="py-3.5 px-4 font-mono text-[10px] text-zinc-500 whitespace-nowrap">
                               <span title={`Conv: ${log.conversation_id || "N/A"}\nSession: ${log.session_id || "N/A"}`}>

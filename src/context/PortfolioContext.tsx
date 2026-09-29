@@ -63,7 +63,7 @@ export interface AiVaultKey {
   model: string;
   isActive: boolean;
   priority: number;
-  status?: "healthy" | "cooldown" | "error" | "standby";
+  status?: "healthy" | "cooldown" | "error" | "standby" | "rate_limited";
   lastTested?: string;
   lastLatencyMs?: number;
   lastError?: string;

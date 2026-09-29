@@ -60,9 +60,9 @@ const PROVIDERS: ProviderMeta[] = [
     defaultModel: "openai/gpt-oss-120b",
     models: [
       { id: "openai/gpt-oss-120b", name: "GPT-OSS 120B (Active • High Reasoning & Bangla)" },
-      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B Versatile" },
+      { id: "openai/gpt-oss-20b", name: "GPT-OSS 20B (Fast Inference)" },
       { id: "qwen/qwen3.8-27b", name: "Qwen 3.8 27B" },
-      { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B Instant" },
+      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B Versatile" },
     ],
   },
   {
@@ -76,9 +76,9 @@ const PROVIDERS: ProviderMeta[] = [
     defaultModel: "gemini-3.8-flash",
     models: [
       { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Active Flagship • Recommended)" },
-      { id: "gemini-flash-latest", name: "Gemini Flash Latest" },
-      { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Fast & Active)" },
-      { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash" },
+      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
+      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro" },
     ],
   },
   {
@@ -403,7 +403,7 @@ export function buildUsageSummaryFromKeys(
     const existing = byProvider.get(norm) ?? {
       keyCount: 0,
       tokenBudget: 0,
-      tokensToday: liveUsage?.[norm] ?? (norm === "groq" ? 109_069 : norm === "gemini" ? 83_888 : 0),
+      tokensToday: liveUsage?.[norm] ?? 0,
       label: providerMeta?.name || norm.charAt(0).toUpperCase() + norm.slice(1),
     };
     existing.keyCount += 1;
@@ -411,19 +411,25 @@ export function buildUsageSummaryFromKeys(
     byProvider.set(norm, existing);
   }
 
-  // Fallback if no keys in vault yet
+  const now = new Date();
+  const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+  const resetsDayAt = nextMidnight.getTime();
+
+  // If no keys in vault yet, return empty
   if (byProvider.size === 0) {
-    byProvider.set("groq", { keyCount: 1, tokenBudget: 1_000_000, tokensToday: 109_069, label: "Groq" });
-    byProvider.set("gemini", { keyCount: 1, tokenBudget: 4_500_000, tokensToday: 83_888, label: "Gemini" });
+    return {
+      segments: [],
+      totalDailyLimit: 0,
+      totalTokensToday: 0,
+      totalTokenBudget: 0,
+      metric: "tokens",
+      resetsDayAt,
+    };
   }
 
   const entries = Array.from(byProvider.entries());
   const totalTokenBudget = entries.reduce((acc, [, v]) => acc + v.tokenBudget, 0);
   const totalTokensToday = entries.reduce((acc, [, v]) => acc + v.tokensToday, 0);
-
-  const now = new Date();
-  const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
-  const resetsDayAt = nextMidnight.getTime();
 
   const segments: ProviderUsageSegment[] = entries.map(([p, v]) => {
     const remainingFraction = Math.max(0, Math.min(1, (v.tokenBudget - v.tokensToday) / v.tokenBudget));
@@ -453,13 +459,13 @@ export function buildUsageSummaryFromKeys(
 }
 
 function formatReset(ms: number | null): string {
-  if (ms == null) return "resets in 11h 1m";
+  if (ms == null) return "resets in 7h 11m (06:00 AM BST)";
   const diff = ms - Date.now();
-  if (diff <= 0) return "resets soon";
+  if (diff <= 0) return "resets soon (06:00 AM BST)";
   const h = Math.floor(diff / 3_600_000);
   const m = Math.floor((diff % 3_600_000) / 60_000);
-  if (h > 0) return `resets in ${h}h ${m}m`;
-  return `resets in ${m}m`;
+  if (h > 0) return `resets in ${h}h ${m}m (06:00 AM BST)`;
+  return `resets in ${m}m (06:00 AM BST)`;
 }
 
 interface AuditEntry {
@@ -610,10 +616,8 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   });
 
   // Vault Capacity Usage Summary State (Authentic Precious Meter)
-  const [liveTokenStats, setLiveTokenStats] = useState<Record<string, number>>({
-    groq: 109069,
-    gemini: 83888,
-  });
+  const [liveTokenStats, setLiveTokenStats] = useState<Record<string, number>>({});
+  const [healthSummary, setHealthSummary] = useState<string | null>(null);
 
   // Dynamically reactive to any key additions, backup keys, or changes in aiVault
   const usageSummary = useMemo(() => {
@@ -654,9 +658,9 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
 
   // Seal New Key Form
   const [addMode, setAddMode] = useState<"new" | "backup">("new");
-  const [sealProviderId, setSealProviderId] = useState("cerebras");
+  const [sealProviderId, setSealProviderId] = useState("groq");
   const [sealLabel, setSealLabel] = useState("");
-  const [sealModel, setSealModel] = useState("gpt-oss-120b");
+  const [sealModel, setSealModel] = useState("openai/gpt-oss-120b");
   const [sealApiKey, setSealApiKey] = useState("");
   const [sealCloudflareAccountId, setSealCloudflareAccountId] = useState("");
   const [sealCustomBaseUrl, setSealCustomBaseUrl] = useState("");
@@ -681,7 +685,12 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     const matchedId = providerId === "google-gemini" ? "gemini" : providerId;
     setSealProviderId(matchedId);
     const pMeta = PROVIDERS.find((p) => p.id === matchedId || (matchedId === "gemini" && p.id === "google-gemini"));
-    setSealLabel(`${pMeta?.name || matchedId} backup`);
+    if (pMeta) {
+      setSealModel(pMeta.defaultModel);
+      setSealLabel(`${pMeta.name} Backup`);
+    } else {
+      setSealLabel(`${matchedId} backup`);
+    }
     setSealApiKey("");
     setSealCloudflareAccountId("");
     setSealCustomBaseUrl("");
@@ -737,7 +746,22 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     };
   }, [siteSettings]);
 
-  // Fetch Audit Chronicles
+  // Helper to retrieve authenticated headers for Admin API operations
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const token = data?.session?.access_token;
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+      } catch {}
+    }
+    return headers;
+  };
+
+  // Fetch Audit Chronicles with Supabase DB integration & live merging
   useEffect(() => {
     fetchAuditLogs();
   }, []);
@@ -745,18 +769,134 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   const fetchAuditLogs = async () => {
     setAuditLoading(true);
     try {
-      const res = await fetch("/api/vault?type=audit");
-      if (res.ok) {
-        const data = await res.json();
-        if (data && Array.isArray(data.entries)) {
-          setAuditEntries(data.entries);
+      // 1. Fetch live in-memory logs from API router
+      let apiEntries: AuditEntry[] = [];
+      try {
+        const authHeaders = await getAuthHeaders();
+        const res = await fetch("/api/vault?type=audit", { headers: authHeaders });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.entries)) {
+            apiEntries = data.entries;
+          }
         }
+      } catch {}
+
+      // 2. Fetch from Supabase site_settings and chatbot_interactions
+      let dbEntries: AuditEntry[] = [];
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data: vaultLogSetting } = await supabase
+            .from("site_settings")
+            .select("value")
+            .eq("key", "ai_audit_logs")
+            .maybeSingle();
+
+          if (vaultLogSetting?.value) {
+            try {
+              const parsed = JSON.parse(vaultLogSetting.value);
+              if (Array.isArray(parsed)) {
+                dbEntries.push(...parsed);
+              }
+            } catch {}
+          }
+        } catch {}
+
+        try {
+          const { data: chatInteractions } = await supabase
+            .from("chatbot_interactions")
+            .select("*")
+            .order("timestamp", { ascending: false })
+            .limit(100);
+
+          if (Array.isArray(chatInteractions)) {
+            chatInteractions.forEach((row: any) => {
+              const createdTime = row.timestamp || row.created_at || new Date().toISOString();
+              const isError = row.response_source?.toLowerCase().includes("fail") || !row.answer;
+              dbEntries.push({
+                id: `db_chat_${row.id || row.conversation_id || Math.random()}`,
+                action: "chat_request",
+                resourceType: "chat",
+                resourceId: row.conversation_id || null,
+                metadata: {
+                  provider: row.response_source?.toLowerCase() || "groq",
+                  model: row.response_source?.toLowerCase() === "gemini" ? "gemini-3.8-flash" : "openai/gpt-oss-120b",
+                  tokens: row.token_usage || 0,
+                  latencyMs: row.response_time_ms || 0,
+                  question: row.question,
+                  error: isError ? "Stream interrupted" : undefined,
+                },
+                createdAt: createdTime,
+              });
+            });
+          }
+        } catch {}
       }
+
+      // Merge and deduplicate by ID
+      const map = new Map<string, AuditEntry>();
+      [...apiEntries, ...dbEntries].forEach((e) => {
+        if (e && e.id && !map.has(e.id)) {
+          map.set(e.id, e);
+        }
+      });
+
+      const merged = Array.from(map.values()).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      setAuditEntries(merged);
     } catch {
       // Fallback
     } finally {
       setAuditLoading(false);
     }
+  };
+
+  const persistAuditLog = async (entry: Omit<AuditEntry, "id" | "createdAt">) => {
+    const newEntry: AuditEntry = {
+      ...entry,
+      id: `chronicle_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      createdAt: new Date().toISOString(),
+    };
+
+    // 1. Post to API router
+    try {
+      const authHeaders = await getAuthHeaders();
+      await fetch("/api/vault", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify(newEntry),
+      });
+    } catch {}
+
+    // 2. Persist to Supabase site_settings
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "ai_audit_logs")
+          .maybeSingle();
+
+        let currentLogs: AuditEntry[] = [];
+        if (data?.value) {
+          try {
+            currentLogs = JSON.parse(data.value);
+          } catch {}
+        }
+        currentLogs.unshift(newEntry);
+        if (currentLogs.length > 200) currentLogs = currentLogs.slice(0, 200);
+
+        await supabase
+          .from("site_settings")
+          .upsert({ key: "ai_audit_logs", value: JSON.stringify(currentLogs) }, { onConflict: "key" });
+      } catch (e) {
+        console.warn("[Audit Sync] Supabase audit upsert warning:", e);
+      }
+    }
+
+    fetchAuditLogs();
   };
 
   const showBanner = (variant: Banner["variant"], text: string) => {
@@ -796,7 +936,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     setSiteSettings((prev) => {
       const next = { ...prev, ...updated };
       try {
-        localStorage.setItem("portfolio_site_settings", JSON.stringify(next));
+        // Security sanitization: NEVER write raw plaintext keys to browser localStorage
+        const safeSettings = {
+          ...next,
+          aiVault: [],
+          masterUnifiedKey: "",
+        };
+        localStorage.setItem("portfolio_site_settings", JSON.stringify(safeSettings));
       } catch (e) {}
       return next;
     });
@@ -861,9 +1007,10 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   const testKey = async (keyItem: AiVaultKey) => {
     setTestingKeyId(keyItem.id);
     try {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch("/api/vault", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify({
           action: "test",
           provider: keyItem.provider,
@@ -872,20 +1019,23 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
         }),
       });
       const data = await res.json();
+      const keyStatus = data.ok ? "healthy" : (data.status === "rate_limited" ? "rate_limited" : "error");
       const updatedVault = aiVault.map((k) =>
         k.id === keyItem.id
           ? {
               ...k,
-              status: (data.ok ? "healthy" : "error") as any,
+              status: keyStatus as any,
               lastLatencyMs: data.latencyMs,
               lastError: data.ok ? undefined : (data.error || "Connection failed"),
-              lastTested: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+              lastTested: new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " BST",
             }
           : k
       );
       setAiVault(updatedVault);
       if (data.ok) {
         showBanner("success", `${keyItem.label} ping verified! Roundtrip latency: ${data.latencyMs}ms`);
+      } else if (data.status === "rate_limited") {
+        showBanner("warn", `${keyItem.label}: ${data.error || "Rate limited. Temporary quota exhausted."}`);
       } else {
         showBanner("error", `${keyItem.label} test failed: ${data.error || "Endpoint unreachable"}`);
       }
@@ -901,13 +1051,14 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   const runHealthCheck = async () => {
     setProbingAll(true);
     try {
+      const authHeaders = await getAuthHeaders();
       const updatedVault = [...aiVault];
       for (let i = 0; i < updatedVault.length; i++) {
         const k = updatedVault[i];
         try {
           const res = await fetch("/api/vault", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: authHeaders,
             body: JSON.stringify({
               action: "test",
               provider: k.provider,
@@ -916,12 +1067,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
             }),
           });
           const data = await res.json();
+          const keyStatus = data.ok ? "healthy" : (data.status === "rate_limited" ? "rate_limited" : "error");
           updatedVault[i] = {
             ...k,
-            status: data.ok ? "healthy" : "error",
+            status: keyStatus,
             lastLatencyMs: data.latencyMs,
             lastError: data.ok ? undefined : data.error,
-            lastTested: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+            lastTested: new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " BST",
           };
         } catch {
           updatedVault[i] = { ...k, status: "error" };
@@ -980,20 +1132,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     setSealCustomBaseUrl("");
     await persistVault(nextVault, aiRouterSettings, enableChatbot, `Key "${newEntry.label}" sealed into vault successfully!`);
 
-    // Log chronicle
-    try {
-      await fetch("/api/vault", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "key_created",
-          resourceType: "key",
-          resourceId: newEntry.id,
-          metadata: { providerId: newEntry.provider, keyLabel: newEntry.label, model: newEntry.model },
-        }),
-      });
-      fetchAuditLogs();
-    } catch {}
+    // Log chronicle to DB
+    persistAuditLog({
+      action: "key_created",
+      resourceType: "key",
+      resourceId: newEntry.id,
+      metadata: { providerId: newEntry.provider, keyLabel: newEntry.label, model: newEntry.model },
+    });
   };
 
   // Replace existing key
@@ -1001,6 +1146,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     e.preventDefault();
     if (!replacingKeyId || !replaceForm.apiKey.trim()) return;
 
+    const targetKey = aiVault.find((k) => k.id === replacingKeyId);
     const nextVault = aiVault.map((k) =>
       k.id === replacingKeyId
         ? {
@@ -1018,6 +1164,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     setReplacingKeyId(null);
     setReplaceForm({ label: "", apiKey: "", model: "" });
     await persistVault(nextVault, aiRouterSettings, enableChatbot, "Key credentials successfully replaced!");
+
+    persistAuditLog({
+      action: "key_updated",
+      resourceType: "key",
+      resourceId: replacingKeyId,
+      metadata: { providerId: targetKey?.provider, keyLabel: replaceForm.label.trim() || targetKey?.label },
+    });
   };
 
   // Remove key
@@ -1030,20 +1183,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     setAiVault(nextVault);
     await persistVault(nextVault, aiRouterSettings, enableChatbot, "Key removed from vault.");
 
-    // Log chronicle
-    try {
-      await fetch("/api/vault", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "key_deleted",
-          resourceType: "key",
-          resourceId: id,
-          metadata: { keyLabel: target?.label },
-        }),
-      });
-      fetchAuditLogs();
-    } catch {}
+    // Log chronicle to DB
+    persistAuditLog({
+      action: "key_deleted",
+      resourceType: "key",
+      resourceId: id,
+      metadata: { providerId: target?.provider, keyLabel: target?.label },
+    });
   };
 
   // Forge Unified prec_ Key
@@ -1058,20 +1204,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     setUnifiedKey(newKey);
     await persistVault(aiVault, aiRouterSettings, enableChatbot, "Master unified prec_ key forged and sealed in Vault!", newKey);
 
-    // Log chronicle
-    try {
-      await fetch("/api/vault", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "unified_key_created",
-          resourceType: "key",
-          resourceId: "prec_master",
-          metadata: { keyLabel: "Unified Master Key" },
-        }),
-      });
-      fetchAuditLogs();
-    } catch {}
+    // Log chronicle to DB
+    persistAuditLog({
+      action: "unified_key_created",
+      resourceType: "key",
+      resourceId: "prec_master",
+      metadata: { keyLabel: "Unified Master Key" },
+    });
   };
 
   const copyToClipboard = (id: string, text: string) => {
@@ -1094,14 +1233,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   }, [auditEntries, auditSearch]);
 
   const auditStats = useMemo(() => {
-    const total = auditEntries.length;
-    const chatEntries = auditEntries.filter((e) => e.action === "chat_request");
-    const failed = chatEntries.filter((e) => e.metadata?.error || e.metadata?.streamFailed).length;
-    const success = Math.max(chatEntries.length - failed, 0);
-    const reliability = chatEntries.length === 0 ? 100 : Math.round((success / chatEntries.length) * 100);
-    const tokenFlux = chatEntries.reduce((acc, curr) => acc + (curr.metadata?.tokens || 0), 0);
-    const failovers = chatEntries.filter((e) => e.metadata?.failoverFrom || e.metadata?.attempts && e.metadata.attempts > 1).length;
-    return { reliability, tokenFlux, failovers, total: chatEntries.length };
+    const chat = auditEntries.filter((e) => e.action === "chat_request");
+    const failed = chat.filter((e) => e.metadata?.error || e.metadata?.streamFailed).length;
+    const success = Math.max(chat.length - failed, 0);
+    const reliability = chat.length === 0 ? null : Math.round((success / chat.length) * 1000) / 10;
+    const tokenFlux = chat.reduce((acc, curr) => acc + (curr.metadata?.tokens || 0), 0);
+    const failovers = chat.filter((e) => !!(e.metadata?.failoverFrom || e.metadata?.streamFailed || (typeof e.metadata?.attempts === "number" && e.metadata.attempts > 1))).length;
+    return { reliability, tokenFlux, failovers, total: chat.length };
   }, [auditEntries]);
 
   const exportAuditJson = () => {
@@ -1224,6 +1362,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                   A single <code className="text-[#f2c36b] font-mono bg-[#08100e] px-1.5 py-0.5 rounded border border-[#0d3b2e]">prec_</code> token to rule your inference. Routes across your fallback chain with full conversation context on failover.
                 </p>
 
+                {!hasProviderKeys && !recentlyForgedKey && (
+                  <div className="p-3 bg-amber-950/40 border border-amber-500/40 rounded-lg text-amber-300 text-xs flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                    <span>A Ring without a bearer goes nowhere. Seal at least one provider key so routing has someone to carry it.</span>
+                  </div>
+                )}
+
                 {recentlyForgedKey ? (
                   <div className="mt-2 p-3.5 bg-[#08100e]/90 rounded-lg font-mono text-xs text-[#f2c36b] break-all border border-[#d4a853]/30 shadow-inner flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-2">
@@ -1247,8 +1392,8 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                         </button>
                       </div>
                     </div>
-                    <p className="text-red-300/80 text-[11px] font-sans">
-                      Active until page reload. Sealed safely in Vault.
+                    <p className="text-red-300 text-xs mt-2 font-display">
+                      Copy now — shown once only. Lose it and you must forge anew.
                     </p>
                   </div>
                 ) : (
@@ -1257,6 +1402,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                     onClick={generateUnifiedKey}
                     className="precious-btn-gold mt-2 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold uppercase tracking-wider cursor-pointer"
                     disabled={!hasProviderKeys}
+                    title={!hasProviderKeys ? "A Ring without a bearer goes nowhere. Seal at least one provider key so routing has someone to carry it." : undefined}
                   >
                     Forge prec_ key
                   </button>
@@ -1347,7 +1493,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                 </h2>
                 {aiVault.length > 0 && (
                   <span className="text-[10px] uppercase tracking-[0.16em] text-[#8aab9a] font-mono">
-                    DRAG TO REORDER
+                    Priority flow
                   </span>
                 )}
               </div>
@@ -1380,7 +1526,11 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                           <div className="flex items-center gap-1.5 shrink-0">
                             <span
                               className={`w-2 h-2 rounded-full ${
-                                isHealthy ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" : "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"
+                                isHealthy
+                                  ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                                  : item.status === "rate_limited"
+                                  ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+                                  : "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"
                               }`}
                               title={item.status}
                             />
@@ -1428,75 +1578,77 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
 
             {/* RIGHT: Vault Capacity & Seal Form */}
             <div className="lg:col-span-7 space-y-6">
-              {/* Vault Capacity Bar */}
-              <section className="precious-card p-6 space-y-4">
-                <h2 className="font-cinzel text-lg text-[#dce4e0] tracking-wide uppercase font-semibold">
-                  VAULT CAPACITY
-                </h2>
+              {/* Vault Capacity Bar - only rendered when provider keys exist */}
+              {hasProviderKeys && usageSummary.segments.length > 0 && (
+                <section className="precious-card p-6 space-y-4">
+                  <h2 className="font-cinzel text-lg text-[#dce4e0] tracking-wide uppercase font-semibold">
+                    VAULT CAPACITY
+                  </h2>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2 text-[11px] text-[#8aab9a]">
-                    <span className="font-cinzel tracking-wide text-[#d4a853] text-[11px] uppercase font-semibold">
-                      VAULT CAPACITY · {usageSummary.totalTokensToday.toLocaleString()} /{" "}
-                      {usageSummary.totalTokenBudget.toLocaleString()} TODAY
-                    </span>
-                    <span className="font-mono text-[11px] text-[#8aab9a]/90">
-                      {formatReset(usageSummary.resetsDayAt)}
-                    </span>
-                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-[#8aab9a]">
+                      <span className="font-cinzel tracking-wide text-[#d4a853] text-[11px] uppercase font-semibold">
+                        VAULT CAPACITY · {usageSummary.totalTokensToday.toLocaleString()} /{" "}
+                        {usageSummary.totalTokenBudget.toLocaleString()} TODAY
+                      </span>
+                      <span className="font-mono text-[11px] text-[#8aab9a]/90">
+                        {formatReset(usageSummary.resetsDayAt)}
+                      </span>
+                    </div>
 
-                  {/* Stacked battery: each provider owns a slice; charge drains left -> right */}
-                  <div
-                    className="flex h-3.5 w-full rounded-full overflow-hidden border border-emerald-900/60 bg-[#08100e] shadow-inner"
-                    role="meter"
-                    aria-label="Combined provider routing budget"
-                  >
-                    {usageSummary.segments.map((seg) => {
-                      const colors = getProviderBarColor(seg.providerId);
-                      const remainingPct = Math.round(seg.remainingFraction * 100);
-                      return (
-                        <div
-                          key={seg.providerId}
-                          className={`relative h-full border-r border-[#0d1513] last:border-r-0 ${colors.drained}`}
-                          style={{ width: `${seg.weightPercent}%` }}
-                          role="meter"
-                          title={`${seg.label}: ${seg.tokensToday.toLocaleString()} / ${seg.tokenBudget.toLocaleString()} tokens today (${remainingPct}% left)`}
-                        >
+                    {/* Stacked battery: each provider owns a slice; charge drains left -> right */}
+                    <div
+                      className="flex h-3.5 w-full rounded-full overflow-hidden border border-emerald-900/60 bg-[#08100e] shadow-inner"
+                      role="meter"
+                      aria-label="Combined provider routing budget"
+                    >
+                      {usageSummary.segments.map((seg) => {
+                        const colors = getProviderBarColor(seg.providerId);
+                        const remainingPct = Math.round(seg.remainingFraction * 100);
+                        return (
                           <div
-                            className={`absolute inset-y-0 right-0 ${colors.charge} transition-all duration-500 ease-out`}
-                            style={{ width: `${remainingPct}%` }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                            key={seg.providerId}
+                            className={`relative h-full border-r border-[#0d1513] last:border-r-0 ${colors.drained}`}
+                            style={{ width: `${seg.weightPercent}%` }}
+                            role="meter"
+                            title={`${seg.label}: ${seg.tokensToday.toLocaleString()} / ${seg.tokenBudget.toLocaleString()} tokens today (${remainingPct}% left)`}
+                          >
+                            <div
+                              className={`absolute inset-y-0 right-0 ${colors.charge} transition-all duration-500 ease-out`}
+                              style={{ width: `${remainingPct}%` }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
 
-                  {/* Legend below the bar */}
-                  <ul className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-[#8aab9a]">
-                    {usageSummary.segments.map((seg) => {
-                      const colors = getProviderBarColor(seg.providerId);
-                      const remainingPct = Math.round(seg.remainingFraction * 100);
-                      return (
-                        <li key={seg.providerId} className="flex items-center gap-2">
-                          <span className={`w-2.5 h-2.5 rounded-xs ${colors.charge} ring-1 ${colors.ring}`} aria-hidden />
-                          <span className="text-[#8aab9a]">
-                            <strong className="text-[#dce4e0] font-semibold">{seg.label}</strong>{" "}
-                            <span className="font-mono text-white font-bold">{remainingPct}%</span>{" "}
-                            <span className="text-[#8aab9a]/70 font-mono text-[11px]">
-                              ({seg.tokensToday.toLocaleString()}/{seg.tokenBudget.toLocaleString()})
+                    {/* Legend below the bar */}
+                    <ul className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-[#8aab9a]">
+                      {usageSummary.segments.map((seg) => {
+                        const colors = getProviderBarColor(seg.providerId);
+                        const remainingPct = Math.round(seg.remainingFraction * 100);
+                        return (
+                          <li key={seg.providerId} className="flex items-center gap-2">
+                            <span className={`w-2.5 h-2.5 rounded-xs ${colors.charge} ring-1 ${colors.ring}`} aria-hidden />
+                            <span className="text-[#8aab9a]">
+                              <strong className="text-[#dce4e0] font-semibold">{seg.label}</strong>{" "}
+                              <span className="font-mono text-white font-bold">{remainingPct}%</span>{" "}
+                              <span className="text-[#8aab9a]/70 font-mono text-[11px]">
+                                ({seg.tokensToday.toLocaleString()}/{seg.tokenBudget.toLocaleString()})
+                              </span>
                             </span>
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                          </li>
+                        );
+                      })}
+                    </ul>
 
-                  {/* Footnote matching screenshot exactly */}
-                  <p className="text-[11px] text-[#8aab9a]/80 leading-relaxed font-sans pt-1">
-                    Bar width = each provider's share of your combined daily budget. Color drains as Precious routes requests through that key. Google/Groq may enforce their own limits separately — this is your local routing meter.
-                  </p>
-                </div>
-              </section>
+                    {/* Footnote matching screenshot exactly */}
+                    <p className="text-[11px] text-[#8aab9a]/80 leading-relaxed font-sans pt-1">
+                      Bar width = each provider's share of your combined daily budget. Color drains as Precious routes requests through that key. Google/Groq may enforce their own limits separately — this is your local routing meter.
+                    </p>
+                  </div>
+                </section>
+              )}
 
               {/* Seal a New Secret Form */}
               <section ref={addSectionRef} className="precious-card p-6 md:p-8 scroll-mt-4 space-y-4">
@@ -1686,8 +1838,21 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
               )}
             </div>
 
+            {probingAll && (
+              <p className="text-xs text-[#f2c36b]/90 mb-3 animate-pulse" role="status">
+                Sending a tiny test request to each provider — this can take a few seconds…
+              </p>
+            )}
+            {healthSummary && !probingAll && (
+              <p
+                className="text-xs text-[#8aab9a] mb-3 leading-relaxed border border-[#0d3b2e] rounded-lg px-3 py-2 bg-[#08100e]/80"
+                role="status"
+              >
+                {healthSummary}
+              </p>
+            )}
             <p className="text-xs text-[#8aab9a] leading-relaxed">
-              Backups kick in if the primary key hits a rate limit, runs out of credit, or fails. Add personal backup keys so visitors' dynamic requests never drain completely.
+              Backup keys: if one key hits a rate limit, Precious tries the next key on that provider before switching to another. Separate accounts work best; same-account keys may share quota. Use the ✓ icon to test one key.
             </p>
 
             {aiVault.length === 0 ? (
@@ -1712,7 +1877,11 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                         <div className="flex items-center gap-2.5 min-w-0">
                           <span
                             className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                              isHealthy ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" : "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"
+                              isHealthy
+                                ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                                : k.status === "rate_limited"
+                                ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+                                : "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"
                             }`}
                             title={k.status}
                           />
@@ -1728,6 +1897,11 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                             >
                               {riskLevel === "low" ? "LOW RISK" : "MEDIUM RISK"}
                             </span>
+                            {k.status === "rate_limited" && (
+                              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-950/80 border border-amber-500/40 text-amber-300">
+                                RATE LIMITED
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -1786,14 +1960,16 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                       </div>
 
                       {/* Test result status feedback */}
-                      {k.lastLatencyMs && !isReplacing && (
+                      {isHealthy && k.lastLatencyMs && !isReplacing && (
                         <p className="text-[11px] text-emerald-400 font-mono pl-4">
                           ✓ {k.label}: key is working ({k.lastLatencyMs}ms)
+                          {k.lastTested && <span className="text-[#8aab9a]/80 ml-2 font-normal">at {k.lastTested}</span>}
                         </p>
                       )}
-                      {k.status === "error" && k.lastError && !isReplacing && (
-                        <p className="text-[11px] text-red-300 font-mono pl-4">
-                          ✕ {k.lastError}
+                      {!isHealthy && k.lastError && !isReplacing && (
+                        <p className={`text-[11px] font-mono pl-4 leading-relaxed ${k.status === "rate_limited" ? "text-amber-300" : "text-red-300"}`}>
+                          {k.status === "rate_limited" ? "⚠️" : "✕"} {k.lastError}
+                          {k.lastTested && <span className="text-[#8aab9a]/80 ml-2 font-normal">({k.lastTested})</span>}
                         </p>
                       )}
 
@@ -1881,20 +2057,20 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="precious-card p-5">
               <p className="text-[10px] uppercase tracking-[0.16em] text-[#8aab9a] font-mono mb-2">Reliability score</p>
-              <p className="font-cinzel text-3xl text-[#f2c36b] font-bold">{auditStats.reliability}%</p>
-              <p className="text-xs text-[#8aab9a] mt-1">{auditStats.total} recorded transactions in ledger</p>
+              <p className="font-cinzel text-3xl text-[#f2c36b] font-bold">{auditStats.reliability == null ? "—" : `${auditStats.reliability}%`}</p>
+              <p className="text-xs text-[#8aab9a] mt-1">{auditStats.total === 0 ? "No chat requests yet" : `${auditStats.total} transmutations in ledger`}</p>
             </div>
 
             <div className="precious-card p-5">
               <p className="text-[10px] uppercase tracking-[0.16em] text-[#8aab9a] font-mono mb-2">Token flux</p>
               <p className="font-cinzel text-3xl text-[#f2c36b] font-bold">{auditStats.tokenFlux.toLocaleString()}</p>
-              <p className="text-xs text-[#8aab9a] mt-1">Across recorded chat completions</p>
+              <p className="text-xs text-[#8aab9a] mt-1">Across recorded chat requests</p>
             </div>
 
             <div className="precious-card p-5">
               <p className="text-[10px] uppercase tracking-[0.16em] text-[#8aab9a] font-mono mb-2">Failover incidents</p>
               <p className="font-cinzel text-3xl text-[#f2c36b] font-bold">{auditStats.failovers}</p>
-              <p className="text-xs text-[#8aab9a] mt-1">Provider failovers & self-healing</p>
+              <p className="text-xs text-[#8aab9a] mt-1">Retries and provider switches</p>
             </div>
           </div>
 
@@ -1920,7 +2096,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
               </div>
             ) : filteredAudit.length === 0 ? (
               <div className="py-16 text-center text-xs text-[#8aab9a] font-cinzel italic">
-                No matching chronicles in ledger.
+                {auditSearch ? "No matching chronicles in ledger." : "No chronicles yet. Whisper in Sanctum and return."}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1929,7 +2105,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                     <tr className="border-b border-[#0d3b2e] text-left text-[#8aab9a] text-[11px] uppercase tracking-wider font-mono">
                       <th className="py-3 px-4 font-medium">Time</th>
                       <th className="py-3 px-4 font-medium">Status</th>
-                      <th className="py-3 px-4 font-medium">Route & Provider</th>
+                      <th className="py-3 px-4 font-medium">Route &amp; fallback</th>
                       <th className="py-3 px-4 font-medium hidden md:table-cell">Detail</th>
                       <th className="py-3 px-4 font-medium text-right">Tokens</th>
                     </tr>
@@ -1941,9 +2117,9 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                         <tr key={entry.id} className="hover:bg-[#112820]/40 transition-colors">
                           <td className="py-2.5 px-4 font-mono text-[#8aab9a] whitespace-nowrap">
                             <span className="text-[#dce4e0]/80">
-                              {new Date(entry.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                              {new Date(entry.createdAt).toLocaleDateString("en-GB", { timeZone: "Asia/Dhaka", month: "short", day: "numeric" })}
                             </span>{" "}
-                            {new Date(entry.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                            {new Date(entry.createdAt).toLocaleTimeString("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", second: "2-digit" })} BST
                           </td>
                           <td className="py-2.5 px-4">
                             <span
@@ -1958,19 +2134,41 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                           </td>
                           <td className="py-2.5 px-4 font-mono">
                             {entry.action === "chat_request" ? (
-                              <span className="text-[#dce4e0] font-semibold">
-                                {entry.metadata?.provider || "unknown"} · {entry.metadata?.model || "default"}
-                              </span>
+                              entry.metadata?.streamFailedProvider ? (
+                                <span className="text-[#f2c36b] font-semibold">
+                                  {entry.metadata.streamFailedProvider} ✗ → {entry.metadata.provider || "unknown"} · {entry.metadata.model || "default"}
+                                </span>
+                              ) : isErr ? (
+                                <span className="text-red-300/90 font-medium">
+                                  Failed — {(entry.metadata?.error || "").slice(0, 45)}
+                                </span>
+                              ) : (
+                                <span className="text-[#dce4e0] font-semibold">
+                                  {entry.metadata?.provider || "unknown"} · {entry.metadata?.model || "default"}
+                                </span>
+                              )
                             ) : entry.action === "key_created" ? (
-                              <span className="text-[#f2c36b]">Key Sealed · {entry.metadata?.keyLabel}</span>
+                              <span className="text-[#f2c36b]">Key sealed — {entry.metadata?.providerId || entry.metadata?.keyLabel || "secret"}</span>
+                            ) : entry.action === "key_updated" ? (
+                              <span className="text-[#8aab9a]">Key replaced</span>
+                            ) : entry.action === "key_deleted" ? (
+                              <span className="text-red-300/80">Key removed</span>
                             ) : entry.action === "unified_key_created" ? (
-                              <span className="text-[#f2c36b]">Master prec_ Key Forged</span>
+                              <span className="text-[#f2c36b]">Master key forged</span>
                             ) : (
                               <span className="text-[#8aab9a]">{entry.action}</span>
                             )}
                           </td>
                           <td className="py-2.5 px-4 text-[#8aab9a] hidden md:table-cell max-w-xs truncate">
-                            {entry.metadata?.question ? `"${entry.metadata.question}"` : entry.metadata?.error || "Execution completed"}
+                            {entry.metadata?.failoverFrom ? (
+                              `failover from ${entry.metadata.failoverFrom}${entry.metadata.attempts ? ` · ${entry.metadata.attempts} attempts` : ""}${entry.metadata.error ? ` · error: ${entry.metadata.error}` : ""}`
+                            ) : entry.metadata?.error ? (
+                              `error: ${entry.metadata.error}`
+                            ) : entry.metadata?.question ? (
+                              `"${entry.metadata.question}"`
+                            ) : (
+                              "Normal routing"
+                            )}
                           </td>
                           <td className="py-2.5 px-4 text-right font-mono text-[#f2c36b]">
                             {entry.metadata?.tokens ? entry.metadata.tokens.toLocaleString() : "—"}

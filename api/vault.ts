@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
-import { getStructuredPortfolioData } from "./_lib/chatKnowledge.ts";
+import { getStructuredPortfolioData } from "./_lib/chatKnowledge";
+import { verifyAdminAuth } from "./_lib/auth";
 
 /* =========================================================================
    1. TYPES & INTERFACES
@@ -97,19 +98,15 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 let todayDayKey = new Date().toISOString().slice(0, 10);
-const tokensUsedToday: Record<string, number> = {
-  groq: 109_069,
-  gemini: 83_888,
-};
+const tokensUsedToday: Record<string, number> = {};
 
 function checkAndResetDaily() {
   const currentDay = new Date().toISOString().slice(0, 10);
   if (currentDay !== todayDayKey) {
     todayDayKey = currentDay;
-    tokensUsedToday.groq = 0;
-    tokensUsedToday.gemini = 0;
-    tokensUsedToday.openrouter = 0;
-    tokensUsedToday.openai = 0;
+    for (const key of Object.keys(tokensUsedToday)) {
+      tokensUsedToday[key] = 0;
+    }
   }
 }
 
@@ -154,18 +151,24 @@ export async function getUsageSummary(): Promise<UsageSummary> {
     // fallback
   }
 
+  const now = new Date();
+  const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+  const resetsDayAt = nextMidnight.getTime();
+
   if (byProvider.size === 0) {
-    byProvider.set("groq", { keyCount: 1, tokenBudget: 1_000_000, tokensToday: tokensUsedToday.groq || 109_069 });
-    byProvider.set("gemini", { keyCount: 1, tokenBudget: 4_500_000, tokensToday: tokensUsedToday.gemini || 83_888 });
+    return {
+      segments: [],
+      totalDailyLimit: 0,
+      totalTokensToday: 0,
+      totalTokenBudget: 0,
+      metric: "tokens",
+      resetsDayAt,
+    };
   }
 
   const entries = Array.from(byProvider.entries());
   const totalTokenBudget = entries.reduce((acc, [, v]) => acc + v.tokenBudget, 0);
   const totalTokensToday = entries.reduce((acc, [, v]) => acc + v.tokensToday, 0);
-
-  const now = new Date();
-  const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
-  const resetsDayAt = nextMidnight.getTime();
 
   const segments: ProviderUsageSegment[] = entries.map(([p, v]) => {
     const remainingFraction = Math.max(0, Math.min(1, (v.tokenBudget - v.tokensToday) / v.tokenBudget));
@@ -198,70 +201,7 @@ export async function getUsageSummary(): Promise<UsageSummary> {
    3. AUDIT LOGS LOGIC
    ========================================================================= */
 
-const auditLogLedger: AuditLogEntry[] = [
-  {
-    id: "chronicle_1",
-    action: "chat_request",
-    resourceType: "chat",
-    resourceId: "chat_session_1",
-    metadata: {
-      provider: "groq",
-      model: "openai/gpt-oss-120b",
-      tokens: 3521,
-      latencyMs: 442,
-      question: "রাশেদ ভাই কি প্যাকেজিং ডিজাইন করেন?",
-    },
-    createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-  },
-  {
-    id: "chronicle_2",
-    action: "chat_request",
-    resourceType: "chat",
-    resourceId: "chat_session_2",
-    metadata: {
-      provider: "gemini",
-      model: "gemini-3.8-flash",
-      tokens: 2180,
-      latencyMs: 320,
-      question: "Can you design a premium medicine bottle packaging box?",
-    },
-    createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-  },
-  {
-    id: "chronicle_3",
-    action: "key_created",
-    resourceType: "key",
-    resourceId: "vault_gemini_1",
-    metadata: {
-      providerId: "gemini",
-      keyLabel: "Google Gemini 3.8",
-      model: "gemini-3.8-flash",
-    },
-    createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
-  },
-  {
-    id: "chronicle_4",
-    action: "key_created",
-    resourceType: "key",
-    resourceId: "vault_groq_1",
-    metadata: {
-      providerId: "groq",
-      keyLabel: "Groq (GPT-OSS 120B Active)",
-      model: "openai/gpt-oss-120b",
-    },
-    createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
-  },
-  {
-    id: "chronicle_5",
-    action: "unified_key_created",
-    resourceType: "key",
-    resourceId: "prec_vault_master",
-    metadata: {
-      keyLabel: "Master Unified Key (prec_...)",
-    },
-    createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-  },
-];
+const auditLogLedger: AuditLogEntry[] = [];
 
 export function recordAuditLog(entry: Omit<AuditLogEntry, "id" | "createdAt">): AuditLogEntry {
   const newEntry: AuditLogEntry = {
@@ -278,6 +218,81 @@ export function recordAuditLog(entry: Omit<AuditLogEntry, "id" | "createdAt">): 
 
 export function getAuditLogs(): AuditLogEntry[] {
   return auditLogLedger;
+}
+
+export function cleanHealthError(
+  rawError: any,
+  provider?: string,
+  model?: string
+): { message: string; status: "rate_limited" | "invalid" | "error" } {
+  let text = typeof rawError === "string" ? rawError : rawError?.message || String(rawError || "");
+
+  // Try to parse nested JSON if present (Google Gemini / OpenAI / Groq error objects)
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed.error) {
+      if (typeof parsed.error === "string") {
+        text = parsed.error;
+      } else if (parsed.error.message) {
+        text = parsed.error.message;
+      }
+    }
+  } catch {
+    // not JSON
+  }
+
+  const lower = text.toLowerCase();
+
+  // 1. Quota / Rate limit (HTTP 429 / RESOURCE_EXHAUSTED / Quota exceeded)
+  if (
+    lower.includes("429") ||
+    lower.includes("resource_exhausted") ||
+    lower.includes("quota") ||
+    lower.includes("rate limit") ||
+    lower.includes("too many requests")
+  ) {
+    const retryMatch = text.match(/retry in\s+([\d\.]+\s*[smh]?)/i) || text.match(/try again in\s+([\d\.]+\s*[smh]?)/i);
+    const retryInfo = retryMatch ? ` Retry in ~${Math.round(parseFloat(retryMatch[1]))}s.` : "";
+    const limitMatch = text.match(/limit:\s*(\d+)/i);
+    const limitInfo = limitMatch ? ` (${limitMatch[1]} requests limit)` : "";
+    const modelName = model || "model";
+
+    return {
+      status: "rate_limited",
+      message: `Rate limited: Free tier quota reached for ${modelName}${limitInfo}.${retryInfo}`,
+    };
+  }
+
+  // 2. Authentication / Invalid API key (401 / 403 / API_KEY_INVALID)
+  if (
+    lower.includes("401") ||
+    lower.includes("403") ||
+    lower.includes("invalid api key") ||
+    lower.includes("unauthorized") ||
+    lower.includes("api_key_invalid") ||
+    lower.includes("authentication") ||
+    lower.includes("invalid_api_key")
+  ) {
+    return {
+      status: "invalid",
+      message: `Invalid or unauthorized API key. Please check your credentials.`,
+    };
+  }
+
+  // 3. Model not found (404 / NOT_FOUND)
+  if (lower.includes("404") || lower.includes("not found") || lower.includes("not supported")) {
+    return {
+      status: "error",
+      message: `Model '${model || "selected"}' is not supported or not found for this provider.`,
+    };
+  }
+
+  // 4. Clean short fallback
+  const cleanShort = text.length > 120 ? `${text.slice(0, 117)}…` : text;
+  return {
+    status: "error",
+    message: cleanShort || "Health check probe failed",
+  };
 }
 
 /* =========================================================================
@@ -307,7 +322,8 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
     if (!cerebrasRes.ok) {
       const errJson = await cerebrasRes.json().catch(() => ({}));
       const errMsg = errJson?.error?.message || `Cerebras error HTTP ${cerebrasRes.status}`;
-      return { ok: false, error: errMsg, latencyMs };
+      const cleaned = cleanHealthError(errMsg, "cerebras", targetModel);
+      return { ok: false, error: cleaned.message, status: cleaned.status, latencyMs };
     }
 
     return {
@@ -320,7 +336,10 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
   }
 
   if (provider === "groq" || cleanKey.startsWith("gsk_")) {
-    const targetModel = model?.trim() || "llama-3.3-70b-versatile";
+    let targetModel = model?.trim() || "openai/gpt-oss-120b";
+    if (targetModel.startsWith("gemini") || targetModel.includes("google")) {
+      targetModel = "openai/gpt-oss-120b";
+    }
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -330,7 +349,7 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
       body: JSON.stringify({
         model: targetModel,
         messages: [{ role: "user", content: "Ping test. Respond with OK." }],
-        max_completion_tokens: 5,
+        max_tokens: 5,
       }),
     });
 
@@ -338,7 +357,8 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
     if (!groqRes.ok) {
       const errJson = await groqRes.json().catch(() => ({}));
       const errMsg = errJson?.error?.message || `Groq error HTTP ${groqRes.status}`;
-      return { ok: false, error: errMsg, latencyMs };
+      const cleaned = cleanHealthError(errMsg, "groq", targetModel);
+      return { ok: false, error: cleaned.message, status: cleaned.status, latencyMs };
     }
 
     return {
@@ -351,41 +371,47 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
   }
 
   if (provider === "google-gemini" || provider === "gemini" || cleanKey.startsWith("AIzaSy") || cleanKey.startsWith("AQ.")) {
-    const requestedModel = model?.trim() || "";
-    const targetModel =
-      !requestedModel ||
-      requestedModel.includes("2.5") ||
-      requestedModel.includes("2.0") ||
-      requestedModel.includes("1.5")
-        ? "gemini-3.8-flash"
-        : requestedModel;
+    let targetModel = model?.trim() || "gemini-3.8-flash";
+    if (targetModel.includes("llama") || targetModel.includes("gpt") || targetModel.includes("qwen") || !targetModel.startsWith("gemini")) {
+      targetModel = "gemini-3.8-flash";
+    }
 
-    const ai = new GoogleGenAI({
-      apiKey: cleanKey,
-      httpOptions: { timeout: 15000 },
-    });
+    try {
+      const ai = new GoogleGenAI({
+        apiKey: cleanKey,
+        httpOptions: { timeout: 15000 },
+      });
 
-    const response = await ai.models.generateContent({
-      model: targetModel,
-      contents: "Ping test",
-    });
-
-    const latencyMs = Date.now() - startTime;
-    const textOutput =
-      (typeof (response as any).text === "string" ? (response as any).text : "") ||
-      response.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "";
-
-    if (response && (textOutput || (response.candidates && response.candidates.length > 0))) {
-      return {
-        ok: true,
-        latencyMs,
-        provider: "gemini",
+      const response = await ai.models.generateContent({
         model: targetModel,
-        status: "Healthy",
+        contents: "Ping test",
+      });
+
+      const latencyMs = Date.now() - startTime;
+      const textOutput =
+        (typeof (response as any).text === "string" ? (response as any).text : "") ||
+        response.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "";
+
+      if (response && (textOutput || (response.candidates && response.candidates.length > 0))) {
+        return {
+          ok: true,
+          latencyMs,
+          provider: "gemini",
+          model: targetModel,
+          status: "Healthy",
+        };
+      }
+      throw new Error("No response content received from Gemini");
+    } catch (geminiErr: any) {
+      const cleaned = cleanHealthError(geminiErr, "gemini", targetModel);
+      return {
+        ok: false,
+        error: cleaned.message,
+        status: cleaned.status,
+        latencyMs: Date.now() - startTime,
       };
     }
-    throw new Error("No response content received from Gemini");
   }
 
   if (provider === "mistral" || cleanKey.startsWith("mis_")) {
@@ -407,7 +433,8 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
     if (!misRes.ok) {
       const errJson = await misRes.json().catch(() => ({}));
       const errMsg = errJson?.error?.message || `Mistral error HTTP ${misRes.status}`;
-      return { ok: false, error: errMsg, latencyMs };
+      const cleaned = cleanHealthError(errMsg, "mistral", targetModel);
+      return { ok: false, error: cleaned.message, status: cleaned.status, latencyMs };
     }
 
     return {
@@ -440,7 +467,8 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
     if (!orRes.ok) {
       const errJson = await orRes.json().catch(() => ({}));
       const errMsg = errJson?.error?.message || `OpenRouter error HTTP ${orRes.status}`;
-      return { ok: false, error: errMsg, latencyMs };
+      const cleaned = cleanHealthError(errMsg, "openrouter", targetModel);
+      return { ok: false, error: cleaned.message, status: cleaned.status, latencyMs };
     }
 
     return {
@@ -471,7 +499,8 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
   if (!oaiRes.ok) {
     const errJson = await oaiRes.json().catch(() => ({}));
     const errMsg = errJson?.error?.message || `OpenAI error HTTP ${oaiRes.status}`;
-    return { ok: false, error: errMsg, latencyMs };
+    const cleaned = cleanHealthError(errMsg, "openai", targetModel);
+    return { ok: false, error: cleaned.message, status: cleaned.status, latencyMs };
   }
 
   return {
@@ -515,6 +544,17 @@ export default async function vaultHandler(req: Request, res: Response) {
   const isTest = queryAction === "test" || bodyAction === "test" || url.includes("/test") || Boolean(req.method === "POST" && req.body?.apiKey);
 
   try {
+    // Require admin authentication for sensitive key testing and audit log operations
+    if (isTest || isAudit) {
+      const auth = await verifyAdminAuth(req, "Admin authentication required for Vault diagnostics and audit ledger.");
+      if (!auth.authorized) {
+        const isDev = process.env.NODE_ENV !== "production" && !process.env.VERCEL;
+        if (!isDev) {
+          return res.status(auth.status).json({ ok: false, error: auth.error });
+        }
+      }
+    }
+
     // GET Requests
     if (req.method === "GET") {
       if (isAudit) {
@@ -537,9 +577,11 @@ export default async function vaultHandler(req: Request, res: Response) {
           const result = await testApiKey(provider, apiKey, model);
           return res.status(200).json(result);
         } catch (err: any) {
+          const cleaned = cleanHealthError(err, provider, model);
           return res.status(200).json({
             ok: false,
-            error: err?.message || "Connection failed",
+            status: cleaned.status,
+            error: cleaned.message,
             latencyMs: Date.now() - startTime,
           });
         }
