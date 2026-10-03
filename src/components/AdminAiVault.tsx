@@ -57,12 +57,11 @@ const PROVIDERS: ProviderMeta[] = [
     keySetupUrl: "https://console.groq.com/keys",
     keySetupHint: "Sign up free → API Keys → Create. Keys start with gsk_",
     docsAnchor: "groq",
-    defaultModel: "openai/gpt-oss-120b",
+    defaultModel: "llama-3.3-70b-versatile",
     models: [
-      { id: "openai/gpt-oss-120b", name: "GPT-OSS 120B (Active • High Reasoning & Bangla)" },
-      { id: "openai/gpt-oss-20b", name: "GPT-OSS 20B (Fast Inference)" },
-      { id: "qwen/qwen3.8-27b", name: "Qwen 3.8 27B" },
-      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B Versatile" },
+      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B Versatile (Active Flagship • High Bangla Support)" },
+      { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B Instant (Ultra-Fast Inference)" },
+      { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill 70B (High Reasoning)" },
     ],
   },
   {
@@ -73,12 +72,11 @@ const PROVIDERS: ProviderMeta[] = [
     keySetupUrl: "https://aistudio.google.com/apikey",
     keySetupHint: "Google AI Studio → Get API key → Create. Free tier available.",
     docsAnchor: "google-gemini",
-    defaultModel: "gemini-3.8-flash",
+    defaultModel: "gemini-2.0-flash",
     models: [
-      { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Active Flagship • Recommended)" },
-      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
-      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
-      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro" },
+      { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Active Flagship • Recommended)" },
+      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (Fast & Stable)" },
+      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (Deep Multimodal)" },
     ],
   },
   {
@@ -510,9 +508,9 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
         {
           id: "vault_seed_1",
           provider: isGroq ? "groq" : "gemini",
-          label: isGroq ? "Groq (GPT-OSS 120B Active)" : "Google Gemini 3.8 Flash",
+          label: isGroq ? "Groq (Llama 3.3 70B Active)" : "Google Gemini Flash",
           apiKey: currentKey,
-          model: isGroq ? "openai/gpt-oss-120b" : "gemini-3.8-flash",
+          model: isGroq ? "llama-3.3-70b-versatile" : "gemini-2.0-flash",
           isActive: true,
           priority: 1,
           status: "healthy",
@@ -660,7 +658,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   const [addMode, setAddMode] = useState<"new" | "backup">("new");
   const [sealProviderId, setSealProviderId] = useState("groq");
   const [sealLabel, setSealLabel] = useState("");
-  const [sealModel, setSealModel] = useState("openai/gpt-oss-120b");
+  const [sealModel, setSealModel] = useState("llama-3.3-70b-versatile");
   const [sealApiKey, setSealApiKey] = useState("");
   const [sealCloudflareAccountId, setSealCloudflareAccountId] = useState("");
   const [sealCustomBaseUrl, setSealCustomBaseUrl] = useState("");
@@ -824,7 +822,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                 resourceId: row.conversation_id || null,
                 metadata: {
                   provider: row.response_source?.toLowerCase().replace(/\s*\(failover.*\)/i, "").trim() || "groq",
-                  model: row.response_source?.toLowerCase() === "gemini" ? "gemini-3.8-flash" : "openai/gpt-oss-120b",
+                  model: row.response_source?.toLowerCase() === "gemini" ? "gemini-2.0-flash" : "llama-3.3-70b-versatile",
                   tokens: row.token_usage || 0,
                   latencyMs: row.response_time_ms || 0,
                   question: row.question,

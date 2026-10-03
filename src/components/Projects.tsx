@@ -102,7 +102,7 @@ function ProjectCard({ project, settings, isCarouselActive }: ProjectCardProps) 
             </span>
           </div>
 
-          <h3 className={`font-display font-semibold text-lg transition-colors duration-300 line-clamp-1 ${
+          <h3 className={`font-display font-semibold text-lg leading-snug transition-colors duration-300 line-clamp-2 ${
             isLight
               ? "text-zinc-900 group-hover:text-purple-600"
               : "text-white group-hover:text-purple-300"

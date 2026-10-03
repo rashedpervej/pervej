@@ -191,10 +191,7 @@ function getFaqDisplayTitle(faq: FaqFallbackItem): string {
   if (faq.shortTitle && faq.shortTitle.trim()) {
     return faq.shortTitle.trim();
   }
-  const clean = faq.question
-    .replace(/^(how much does|how do you|how do|what is|what are|what will|can you|can i|do you|is there)\s+/i, "")
-    .replace(/\?+$/, "");
-  return clean.length > 32 ? clean.slice(0, 30) + "..." : clean;
+  return faq.question.trim();
 }
 
 /**
@@ -934,7 +931,9 @@ export default function AIChatBot() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to send message to server");
+        const errText = await res.text().catch(() => "");
+        console.warn(`[AIChatBot] Server returned HTTP ${res.status}:`, errText);
+        throw new Error(`Server returned HTTP ${res.status}: ${errText}`);
       }
 
       const data = await res.json();
@@ -981,11 +980,57 @@ export default function AIChatBot() {
         tokenUsage: data.tokenUsage || null
       });
     } catch (error: any) {
-      console.error("Chat error:", error);
+      console.warn("[AIChatBot Chat Error - Activating Resilient Grounded Fallback]:", error?.message || error);
+
+      // Intelligent Client-Side Grounded FAQ Fallback:
+      // If server is unreachable or encountering a transient error, check local dbFaqs
+      const lowerQuery = cleanText.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
+      const matchedFaq = (dbFaqs || []).find((f) => {
+        const faqQ = (f.question || "").toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
+        return (
+          faqQ === lowerQuery ||
+          (lowerQuery.length > 15 && faqQ.includes(lowerQuery)) ||
+          (faqQ.length > 15 && lowerQuery.includes(faqQ))
+        );
+      });
+
+      if (matchedFaq && matchedFaq.answer) {
+        const faqReply = matchedFaq.answer;
+        const botMessage: Message = {
+          id: "bot_faq_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
+          role: "model",
+          content: faqReply,
+          timestamp: new Date(),
+          actions: getImplicitActions(faqReply)
+        };
+        setMessages((prev) => {
+          if (prev.length > 0) {
+            const last = prev[prev.length - 1];
+            if (last.role === "model" && last.content.trim() === faqReply.trim()) {
+              return prev;
+            }
+          }
+          return [...prev, botMessage];
+        });
+        logInteraction({
+          question: cleanText,
+          answer: faqReply,
+          source: "FAQ (Client Fallback)",
+          responseTimeMs: Date.now() - startTime,
+          tokenUsage: null
+        });
+        return;
+      }
+
+      const isBengali = /[\u0980-\u09FF]/.test(cleanText) || /\b(koren|kori|korte|apnar|amake|ki|kemon|kothay|bhalo)\b/i.test(cleanText);
+      const fallbackContent = isBengali
+        ? "Rashed Pervej একজন Senior Visualizer ও Graphic Designer, যিনি **Brand Identity**, **Packaging Design** এবং **Motion Graphics**-এ বিশেষজ্ঞ। ওনার সাথে সরাসরি যোগাযোগ করতে নিচের WhatsApp বা Email বাটন ব্যবহার করুন:"
+        : "Rashed Pervej is a Senior Visualizer specializing in **Brand Identity**, **Packaging Design**, and **Motion Graphics** with 6+ years of international experience. You can reach out directly via WhatsApp or Email below:";
+
       const errorMessage: Message = {
         id: "err_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
         role: "model",
-        content: "Oops! My communication link had a temporary hiccup. Please reach out to Rashed directly at **rashedpervej2011@gmail.com** or via WhatsApp.",
+        content: fallbackContent,
         timestamp: new Date(),
         actions: [
           {
@@ -1015,8 +1060,8 @@ export default function AIChatBot() {
       const responseTime = Date.now() - startTime;
       logInteraction({
         question: cleanText,
-        answer: `[ERROR] ${error?.message || "Failed to reach backend services"}`,
-        source: "Gemini",
+        answer: `[ERROR_FALLBACK] ${error?.message || "Failed to reach backend services"}`,
+        source: "System Fallback",
         responseTimeMs: responseTime,
         tokenUsage: null
       });
@@ -1489,7 +1534,7 @@ export default function AIChatBot() {
                                       type="button"
                                       onClick={() => handleSelectFaq(faq)}
                                       title={faq.question}
-                                      className={`text-xs px-3 py-1.5 rounded-full border transition-all text-left font-medium active:scale-95 cursor-pointer max-w-[280px] truncate ${
+                                      className={`text-xs px-3 py-1.5 rounded-full border transition-all text-left font-medium active:scale-95 cursor-pointer max-w-full whitespace-normal break-words leading-relaxed ${
                                         isLight
                                           ? "bg-white hover:bg-purple-50 text-zinc-800 hover:text-purple-700 border-zinc-200"
                                           : "bg-white/5 hover:bg-purple-500/15 text-zinc-300 hover:text-white border-white/10"
@@ -1616,7 +1661,7 @@ export default function AIChatBot() {
                                   : "hover:bg-white/5 text-zinc-300 hover:text-white"
                               }`}
                             >
-                              <span className="truncate pr-2 font-medium" title={faq.question}>✨ {getFaqDisplayTitle(faq)}</span>
+                              <span className="whitespace-normal break-words leading-snug pr-2 font-medium" title={faq.question}>✨ {getFaqDisplayTitle(faq)}</span>
                               <Send className="w-3 h-3 opacity-0 group-hover:opacity-100 text-purple-500 transition-opacity shrink-0" />
                             </button>
                           ))
