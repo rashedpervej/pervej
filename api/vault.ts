@@ -136,9 +136,9 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
   }
 
   if (provider === "groq" || cleanKey.startsWith("gsk_")) {
-    let targetModel = model?.trim() || "openai/gpt-oss-120b";
-    if (targetModel.startsWith("gemini") || targetModel.includes("google")) {
-      targetModel = "openai/gpt-oss-120b";
+    let targetModel = model?.trim() || "llama-3.3-70b-versatile";
+    if (targetModel.includes("oss") || targetModel.includes("120b") || targetModel.includes("20b") || targetModel.startsWith("gemini") || targetModel.includes("google")) {
+      targetModel = "llama-3.3-70b-versatile";
     }
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -171,9 +171,9 @@ async function testApiKey(provider: string, apiKey: string, model?: string) {
   }
 
   if (provider === "google-gemini" || provider === "gemini" || cleanKey.startsWith("AIzaSy") || cleanKey.startsWith("AQ.")) {
-    let targetModel = model?.trim() || "gemini-3.8-flash";
-    if (targetModel.includes("llama") || targetModel.includes("gpt") || targetModel.includes("qwen") || !targetModel.startsWith("gemini")) {
-      targetModel = "gemini-3.8-flash";
+    let targetModel = model?.trim() || "gemini-2.0-flash";
+    if (targetModel.includes("3.8") || targetModel.includes("2.5") || targetModel.includes("llama") || targetModel.includes("gpt") || targetModel.includes("qwen") || !targetModel.startsWith("gemini")) {
+      targetModel = "gemini-2.0-flash";
     }
 
     try {

@@ -80,7 +80,7 @@ export default async function proxyChatCompletionsHandler(req: Request, res: Res
       activeCandidates.push({
         provider: "groq",
         apiKey: process.env.GROQ_API_KEY,
-        model: "openai/gpt-oss-120b",
+        model: "llama-3.3-70b-versatile",
         label: "Groq Backstop",
       });
     }
@@ -88,7 +88,7 @@ export default async function proxyChatCompletionsHandler(req: Request, res: Res
       activeCandidates.push({
         provider: "gemini",
         apiKey: process.env.GEMINI_API_KEY,
-        model: "gemini-3.8-flash",
+        model: "gemini-2.0-flash",
         label: "Gemini Backstop",
       });
     }
@@ -112,7 +112,13 @@ export default async function proxyChatCompletionsHandler(req: Request, res: Res
     for (const candidate of activeCandidates) {
       const provider = (candidate.provider || "gemini").toLowerCase();
       const apiKey = candidate.apiKey;
-      const targetModel = model || candidate.model || (provider === "groq" ? "openai/gpt-oss-120b" : "gemini-3.8-flash");
+      let targetModel = model || candidate.model || (provider === "groq" ? "llama-3.3-70b-versatile" : "gemini-2.0-flash");
+      if (provider === "groq" && (targetModel.includes("oss") || targetModel.includes("120b") || targetModel.includes("20b"))) {
+        targetModel = "llama-3.3-70b-versatile";
+      }
+      if (provider === "gemini" && (targetModel.includes("3.8") || targetModel.includes("2.5") || !targetModel.startsWith("gemini"))) {
+        targetModel = "gemini-2.0-flash";
+      }
 
       try {
         if (provider === "groq" || provider === "openrouter" || provider === "openai" || provider === "cerebras" || provider === "mistral") {
@@ -155,7 +161,7 @@ export default async function proxyChatCompletionsHandler(req: Request, res: Res
         } else {
           // Gemini provider
           const ai = new GoogleGenAI({ apiKey });
-          const geminiModel = targetModel.includes("gemini") ? targetModel : "gemini-3.8-flash";
+          const geminiModel = targetModel.includes("gemini") && !targetModel.includes("3.8") ? targetModel : "gemini-2.0-flash";
 
           // Format contents
           const systemMsg = messages.find((m: any) => m.role === "system")?.content || "";
