@@ -1,5 +1,12 @@
 {
   "version": 2,
+  "functions": {
+    "api/*.ts": {
+      "maxDuration": 60,
+      "memory": 1024,
+      "includeFiles": "data/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/v1/(.*)",
