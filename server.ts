@@ -86,8 +86,8 @@ app.get("/v1/models", (req, res) => {
   res.json({
     object: "list",
     data: [
-      { id: "gemini-3.8-flash", object: "model", owned_by: "precious-vault" },
-      { id: "openai/gpt-oss-120b", object: "model", owned_by: "precious-vault" },
+      { id: "gemini-2.0-flash", object: "model", owned_by: "precious-vault" },
+      { id: "llama-3.3-70b-versatile", object: "model", owned_by: "precious-vault" },
       { id: "llama-3.3-70b-versatile", object: "model", owned_by: "precious-vault" },
     ],
   });
