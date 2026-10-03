@@ -221,7 +221,7 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
         provider: "groq",
         label: "Groq Cloud (Environment)",
         apiKey: envGroq.trim(),
-        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
         priority: 1,
         isActive: true,
       });
