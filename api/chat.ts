@@ -571,6 +571,20 @@ function generateDirectAnswer(query: string, history: any[], data: any): string 
       return "ফুল-টাইম বা ক্যারিয়ারের সুযোগের প্রস্তাবের জন্য ধন্যবাদ! Rashed মূলত সিলেক্টেড ব্র্যান্ড বা এজেন্সির সাথে সিনিয়র ভিজ্যুয়ালাইজার বা ডিজাইন লিড হিসেবে কাজ করতে আগ্রহী। আপনার কোম্পানি ও ভূমিকা নিয়ে বিস্তারিত আলোচনার জন্য নিচের WhatsApp বা Email বাটন দিয়ে সরাসরি যোগাযোগ করতে পারেন:";
     }
     return "Thank you for the opportunity! Rashed is open to discussing high-impact Senior Visualizer, Art Director, or Design Lead roles with forward-thinking brands and creative teams. To discuss the role and your company vision, please connect directly with Rashed via WhatsApp or Email below:";
+  // 6. Direct Grounded Match with verified FAQ Database
+  if (Array.isArray(data?.faqs) && data.faqs.length > 0) {
+    const cleanQ = q.replace(/[^a-z0-9]/g, " ").trim();
+    for (const faq of data.faqs) {
+      if (!faq?.question || !faq?.answer) continue;
+      const faqQ = faq.question.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
+      if (
+        faqQ === cleanQ ||
+        (cleanQ.length > 12 && faqQ.includes(cleanQ)) ||
+        (faqQ.length > 12 && cleanQ.includes(faqQ))
+      ) {
+        return faq.answer.trim();
+      }
+    }
   }
 
   return null;
@@ -601,6 +615,21 @@ export default async function handler(req: any, res: any) {
     }
 
     let payload = req.body;
+    if (!payload && typeof req.on === "function") {
+      try {
+        const rawBody = await new Promise<string>((resolve, reject) => {
+          let data = "";
+          req.on("data", (chunk: any) => {
+            data += chunk;
+          });
+          req.on("end", () => resolve(data));
+          req.on("error", (err: any) => reject(err));
+        });
+        if (rawBody) {
+          payload = JSON.parse(rawBody);
+        }
+      } catch (e) {}
+    }
     if (typeof payload === "string") {
       try {
         payload = JSON.parse(payload);
@@ -666,7 +695,7 @@ export default async function handler(req: any, res: any) {
         provider: (k.startsWith("gsk_") ? "groq" : "gemini") as any,
         label: k.startsWith("gsk_") ? "Groq (Llama 3.3 70B Active)" : "Google Gemini Flash",
         apiKey: k,
-        model: k.startsWith("gsk_") ? "llama-3.3-70b-versatile" : "gemini-3.8-flash",
+        model: k.startsWith("gsk_") ? "llama-3.3-70b-versatile" : "gemini-2.0-flash",
         priority: idx + 1,
       }));
     }
@@ -736,7 +765,10 @@ export default async function handler(req: any, res: any) {
       const keyId = candidate.id || candidate.apiKey;
       try {
         if (candidate.provider === "groq" || candidate.apiKey.startsWith("gsk_")) {
-          const modelToUse = candidate.model || "openai/gpt-oss-120b";
+          let modelToUse = candidate.model?.trim() || "llama-3.3-70b-versatile";
+          if (modelToUse.includes("oss") || modelToUse.includes("120b") || modelToUse.includes("20b") || modelToUse.startsWith("gemini")) {
+            modelToUse = "llama-3.3-70b-versatile";
+          }
           let groqRes;
           try {
             groqRes = await callOpenAICompatibleChat({
@@ -750,7 +782,7 @@ export default async function handler(req: any, res: any) {
             });
           } catch (primaryErr) {
             // Groq fallback model if primary model fails
-            const fallbackModel = modelToUse.includes("120b") ? "openai/gpt-oss-20b" : "llama-3.3-70b-versatile";
+            const fallbackModel = modelToUse === "llama-3.3-70b-versatile" ? "llama-3.1-8b-instant" : "llama-3.3-70b-versatile";
             groqRes = await callOpenAICompatibleChat({
               endpointUrl: "https://api.groq.com/openai/v1/chat/completions",
               apiKey: candidate.apiKey,
@@ -891,9 +923,9 @@ export default async function handler(req: any, res: any) {
           });
 
           const rawModel = candidate.model?.trim() || "";
-          let modelToUse = rawModel || "gemini-3.8-flash";
-          if (modelToUse.includes("llama") || modelToUse.includes("gpt") || modelToUse.includes("qwen") || !modelToUse.startsWith("gemini")) {
-            modelToUse = "gemini-3.8-flash";
+          let modelToUse = rawModel;
+          if (!modelToUse || modelToUse.includes("3.8") || modelToUse.includes("2.5") || modelToUse.includes("llama") || modelToUse.includes("gpt") || !modelToUse.startsWith("gemini")) {
+            modelToUse = "gemini-2.0-flash";
           }
           let response: any = null;
           try {
@@ -908,7 +940,7 @@ export default async function handler(req: any, res: any) {
             });
           } catch (geminiPrimaryErr) {
             // Fallback model if primary model fails
-            const fallbackModel = modelToUse === "gemini-3.8-flash" ? "gemini-2.5-flash" : "gemini-3.8-flash";
+            const fallbackModel = modelToUse === "gemini-2.0-flash" ? "gemini-1.5-flash" : "gemini-2.0-flash";
             response = await ai.models.generateContent({
               model: fallbackModel,
               contents: contents,
