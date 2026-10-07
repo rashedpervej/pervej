@@ -10,8 +10,14 @@
  * - Format: enc:v1:<base64-iv>:<base64-ciphertext-with-tag>
  */
 
-const VAULT_PEPPER = "pervej_portfolio_aes256_gcm_vault_pepper_9921_alpha";
-const VAULT_SALT = "pervej_rashed_vault_salt_secure_2026";
+const VAULT_PEPPER =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_VAULT_PEPPER) ||
+  (typeof process !== "undefined" && process.env?.VAULT_PEPPER) ||
+  "pervej_portfolio_aes256_gcm_vault_pepper_9921_alpha";
+const VAULT_SALT =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_VAULT_SALT) ||
+  (typeof process !== "undefined" && process.env?.VAULT_SALT) ||
+  "pervej_rashed_vault_salt_secure_2026";
 
 function bytesToBase64(bytes: Uint8Array): string {
   if (typeof Buffer !== "undefined") {

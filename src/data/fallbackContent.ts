@@ -6,7 +6,8 @@
  * DB is the PRIMARY source; this dataset acts as the RELIABLE FALLBACK.
  */
 
-import { SectionRecord, SiteSettings } from "../context/PortfolioContext";
+import { SectionRecord, SiteSettings, ChatActionButton, StarterQuestionItem, ChatbotSettings } from "../context/PortfolioContext";
+export type { ChatActionButton, StarterQuestionItem, ChatbotSettings };
 import { DEFAULT_BRAND_SVGS } from "../utils/brandLogos";
 
 export interface FaqFallbackItem {
@@ -1028,6 +1029,118 @@ export const FALLBACK_SECTIONS: SectionRecord[] = [
   }
 ];
 
+export const DEFAULT_CHAT_ACTION_BUTTONS: ChatActionButton[] = [
+  {
+    id: "cta_behance",
+    label: "View on Behance",
+    type: "behance",
+    url: "https://be.net/rashedpervej",
+    triggerKeywords: ["portfolio", "behance", "be.net", "case study", "case studies", "work", "projects", "kaj", "কাজ", "প্রজেক্ট", "দেখতে চাই", "লিংক"],
+    showAsQuickPill: true,
+    pillIcon: "🎨",
+    primary: true,
+    isActive: true,
+    order: 1,
+  },
+  {
+    id: "cta_brief",
+    label: "Submit Project Brief",
+    type: "brief",
+    triggerKeywords: ["brief", "quote", "korte cai", "quotation", "hire", "শুরু করতে চাই", "কোটেশন", "ব্রিফ", "হায়ার", "প্রজেক্ট শুরু"],
+    showAsQuickPill: true,
+    pillIcon: "📝",
+    primary: false,
+    isActive: true,
+    order: 2,
+  },
+  {
+    id: "cta_whatsapp",
+    label: "WhatsApp Rashed",
+    type: "whatsapp",
+    url: "https://wa.me/8801932623969?text=" + encodeURIComponent("Hi Rashed, I saw your portfolio and would like to discuss a project."),
+    triggerKeywords: ["whatsapp", "chat", "call", "phone", "number", "যোগাযোগ", "কথা বলতে চাই", "হোয়াটসঅ্যাপ", "নাম্বার"],
+    showAsQuickPill: true,
+    pillIcon: "💬",
+    primary: false,
+    isActive: true,
+    order: 3,
+  },
+  {
+    id: "cta_email",
+    label: "Email Rashed",
+    type: "email",
+    url: "mailto:rashedpervej2011@gmail.com?subject=" + encodeURIComponent("Project / Career Inquiry via Portfolio"),
+    triggerKeywords: ["email", "mail", "ইমেইল", "মেইল"],
+    showAsQuickPill: false,
+    pillIcon: "✉️",
+    primary: false,
+    isActive: true,
+    order: 4,
+  },
+];
+
+export const DEFAULT_PROJECT_BRIEF_SETTINGS = {
+  step1Title: "What are we making?",
+  step1Subtitle: "Pick what fits. You can add detail next.",
+  step2Title: "Where do I reach you?",
+  step2Subtitle: "Takes about 15 seconds.",
+  categories: [
+    "Brand Identity",
+    "Packaging Design",
+    "Motion Graphics",
+    "Full Brand & Pack",
+  ],
+  budgetOptions: [
+    "< $500",
+    "$500 - $1.5k",
+    "$1.5k - $3k",
+    "$3k+",
+  ],
+  enableFlexibleBudget: true,
+  timelineOptions: [
+    { value: "Urgent (< 2 wks)", label: "Urgent", hint: "Under 2 weeks" },
+    { value: "Standard (2-4 wks)", label: "Standard", hint: "2–4 weeks" },
+    { value: "Flexible", label: "Flexible", hint: "No fixed date" },
+  ],
+  scopeLabel: "Project Scope / Key Deliverables",
+  scopePlaceholder: "A few lines on what you need designed.",
+  confidentialityNotice: "Strictly confidential. Direct communication with Rashed.",
+  submitButtonText: "Send Project Brief",
+  successTitle: "Project Brief Received!",
+  successMessage: "Rashed has been notified with your project specifications and will review your scope promptly.",
+  whatsappButtonText: "Chat Now on WhatsApp",
+};
+
+export const DEFAULT_CHATBOT_SETTINGS: ChatbotSettings = {
+  botName: "Creative Advisor",
+  botSubtitle: "Online • Replies in real-time",
+  botAvatarIcon: "sparkles",
+  showAiBadge: false,
+  botBadgeText: "Studio Partner",
+  greetingMessage: "Hello! I am Rashed's Creative Advisor. I can answer questions about his 6+ years of design experience, motion graphics skills, brand identity work, or how to hire him for a project. What would you like to know?",
+  quickHelpTitle: "How can I help you today?",
+  humanPersonaPrompt: "Speak like a warm, courteous, and seasoned senior design visualizer and creative consultant. Chat like a real human design peer sitting across the table. Never use robotic clichés, corporate jargon, or mention that you are an AI model. Be concise (1-3 sentences), engaging, and passionate about typography, packaging, and brand aesthetics.",
+  enableStarterChips: true,
+  maxStarterChips: 4,
+  enableQuickPills: true,
+  maxQuickPills: 5,
+  enablePreChatGate: true,
+  enablePromptBrief: true,
+  enableProgressiveLeadGate: true,
+  welcomeTitle: "Welcome",
+  welcomeSubtitle: "Let’s chat together",
+  welcomeButtonText: "Chat Now",
+  welcomeLogoUrl: "",
+  actionButtons: DEFAULT_CHAT_ACTION_BUTTONS,
+  starterQuestions: [
+    { id: "portfolio", label: "View Portfolio", icon: "🎨", query: "view portfolio", isActive: true, order: 1 },
+    { id: "project", label: "Discuss a Project", icon: "💼", isBrief: true, isActive: true, order: 2 },
+    { id: "quote", label: "Get an Estimate", icon: "💰", query: "How much does a project typically cost?", isActive: true, order: 3 },
+    { id: "questions", label: "Ask a Question", icon: "💬", isFaqToggle: true, isActive: true, order: 4 },
+  ],
+  projectBriefSettings: DEFAULT_PROJECT_BRIEF_SETTINGS,
+};
+
 export const FALLBACK_SITE_SETTINGS: SiteSettings = {
   "seoTitle": "Rashed Pervej | Senior Visualizer Portfolio",
   "seoDescription": "Portfolio of Rashed Pervej, Senior Visualizer specializing in Brand Identity, Packaging, and Motion Design.",
@@ -1045,6 +1158,7 @@ export const FALLBACK_SITE_SETTINGS: SiteSettings = {
   "customCss": "",
   "enableChatbot": true,
   "marqueeSpeed": 25,
+  "chatbotSettings": DEFAULT_CHATBOT_SETTINGS,
   "projectSettings": {
     "showYear": false,
     "showLiveUrl": false,

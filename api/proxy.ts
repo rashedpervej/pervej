@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 import { getStructuredPortfolioData } from "./_lib/chatKnowledge.js";
 import { recordAuditLog, recordTokenUsage } from "./_lib/auditTracker.js";
+import { resolveActiveProviderChain } from "./_lib/centralKeyResolver.js";
 
 export default async function proxyChatCompletionsHandler(req: Request, res: Response) {
   // Support CORS for external web apps calling from anywhere
@@ -97,33 +98,13 @@ export default async function proxyChatCompletionsHandler(req: Request, res: Res
       });
     }
 
-    // Prepare Vault candidates
-    const activeCandidates = vault
-      .filter((k) => k && k.apiKey && k.isActive !== false)
-      .sort((a, b) => (a.priority || 99) - (b.priority || 99));
-
-    // Add env candidates as backstops if not already present
-    if (process.env.GROQ_API_KEY && !activeCandidates.some((c) => c.apiKey === process.env.GROQ_API_KEY)) {
-      activeCandidates.push({
-        provider: "groq",
-        apiKey: process.env.GROQ_API_KEY,
-        model: "llama-3.3-70b-versatile",
-        label: "Groq Backstop",
-      });
-    }
-    if (process.env.GEMINI_API_KEY && !activeCandidates.some((c) => c.apiKey === process.env.GEMINI_API_KEY)) {
-      activeCandidates.push({
-        provider: "gemini",
-        apiKey: process.env.GEMINI_API_KEY,
-        model: "gemini-2.0-flash",
-        label: "Gemini Backstop",
-      });
-    }
+    // Prepare Vault candidates via Central Key Resolver
+    const activeCandidates = await resolveActiveProviderChain();
 
     if (activeCandidates.length === 0) {
       return res.status(503).json({
         error: {
-          message: "No active provider keys sealed in the Precious Vault. Please add a Groq or Gemini key in the Vault.",
+          message: "No active provider keys configured in the AI Vault. Please configure an active API key.",
           type: "vault_empty_error",
         },
       });
@@ -137,15 +118,9 @@ export default async function proxyChatCompletionsHandler(req: Request, res: Res
 
     // Route across Fallback Chain
     for (const candidate of activeCandidates) {
-      const provider = (candidate.provider || "gemini").toLowerCase();
+      const provider = (candidate.provider || "groq").toLowerCase();
       const apiKey = candidate.apiKey;
-      let targetModel = model || candidate.model || (provider === "groq" ? "llama-3.3-70b-versatile" : "gemini-2.0-flash");
-      if (provider === "groq" && (targetModel.includes("oss") || targetModel.includes("120b") || targetModel.includes("20b"))) {
-        targetModel = "llama-3.3-70b-versatile";
-      }
-      if (provider === "gemini" && (targetModel.includes("3.8") || targetModel.includes("2.5") || !targetModel.startsWith("gemini"))) {
-        targetModel = "gemini-2.0-flash";
-      }
+      let targetModel = model || candidate.model || (provider === "groq" ? "llama-3.3-70b-versatile" : "default");
 
       try {
         if (provider === "groq" || provider === "openrouter" || provider === "openai" || provider === "cerebras" || provider === "mistral") {
@@ -188,7 +163,7 @@ export default async function proxyChatCompletionsHandler(req: Request, res: Res
         } else {
           // Gemini provider
           const ai = new GoogleGenAI({ apiKey });
-          const geminiModel = targetModel.includes("gemini") && !targetModel.includes("3.8") ? targetModel : "gemini-2.0-flash";
+          const geminiModel = targetModel || "gemini-2.5-flash";
 
           // Format contents
           const systemMsg = messages.find((m: any) => m.role === "system")?.content || "";

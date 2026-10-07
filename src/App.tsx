@@ -75,6 +75,25 @@ class AdminErrorBoundary extends React.Component<
   }
 }
 
+class WidgetErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean }
+> {
+  override state: { hasError: boolean } = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  override componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("Widget render error caught:", error, info);
+  }
+  override render() {
+    if (this.state.hasError) {
+      return this.props.fallback ?? null;
+    }
+    return this.props.children;
+  }
+}
+
 // Elegant lightweight route loading fallback
 function RouteLoadingFallback() {
   return (
@@ -186,9 +205,11 @@ function MainPortfolio() {
       </main>
       <Footer />
       {isChatbotEnabled && (
-        <Suspense fallback={null}>
-          <AIChatBot />
-        </Suspense>
+        <WidgetErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <AIChatBot />
+          </Suspense>
+        </WidgetErrorBoundary>
       )}
     </div>
   );
