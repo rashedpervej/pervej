@@ -6,6 +6,7 @@ export interface AuthResult {
   error?: string;
   status: number;
   user?: any;
+  token?: string;
 }
 
 export async function verifyAdminAuth(req: Request, requiredMessage = "Admin privileges required."): Promise<AuthResult> {
@@ -36,7 +37,7 @@ export async function verifyAdminAuth(req: Request, requiredMessage = "Admin pri
     // Site owner email check
     const isOwner = user.email === "rashedpervej2011@gmail.com" || user.email === "admin@portfolio.com";
     if (isOwner) {
-      return { authorized: true, status: 200, user };
+      return { authorized: true, status: 200, user, token };
     }
 
     // Role check from user_roles table
@@ -48,10 +49,10 @@ export async function verifyAdminAuth(req: Request, requiredMessage = "Admin pri
       .maybeSingle();
 
     if (roleData && !roleError) {
-      return { authorized: true, status: 200, user };
+      return { authorized: true, status: 200, user, token };
     }
 
-    return { authorized: false, error: `Forbidden: ${requiredMessage}`, status: 403, user };
+    return { authorized: false, error: `Forbidden: ${requiredMessage}`, status: 403, user, token };
   } catch (err: any) {
     return { authorized: false, error: err?.message || "Auth verification failure.", status: 500 };
   }

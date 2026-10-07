@@ -22,7 +22,7 @@ export interface UsageSummary {
 
 export interface AuditLogEntry {
   id: string;
-  action: "chat_request" | "key_created" | "key_updated" | "key_deleted" | "unified_key_created" | "health_check";
+  action: "chat_request" | "key_created" | "key_updated" | "key_deleted" | "unified_key_created" | "health_check" | "provider_call_failed" | "all_providers_failed" | "key_probe_failed";
   resourceType: string | null;
   resourceId: string | null;
   metadata: {
