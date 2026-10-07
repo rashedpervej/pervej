@@ -1,4 +1,4 @@
-import { getStructuredPortfolioData } from "./chatKnowledge.js";
+import { resolveActiveProviderChain } from "./centralKeyResolver.js";
 
 export interface ProviderUsageSegment {
   providerId: string;
@@ -101,7 +101,7 @@ function checkAndResetDaily() {
 
 export function recordTokenUsage(provider: string, tokens: number) {
   checkAndResetDaily();
-  const norm = provider.toLowerCase().includes("gemini") ? "gemini" : provider.toLowerCase();
+  const norm = provider.toLowerCase().replace("google-", "");
   tokensUsedToday[norm] = (tokensUsedToday[norm] || 0) + tokens;
 }
 
@@ -118,14 +118,12 @@ export async function getUsageSummary(): Promise<UsageSummary> {
   >();
 
   try {
-    const data = await getStructuredPortfolioData();
-    const vaultKeys = Array.isArray(data?.aiVault) && data.aiVault.length > 0 ? data.aiVault : [];
-
-    if (vaultKeys.length > 0) {
-      for (const k of vaultKeys) {
-        if (!k || k.isActive === false) continue;
-        const norm = (k.provider || "gemini").toLowerCase().replace("google-", "");
-        const budget = PROVIDER_BUDGETS[k.provider] || PROVIDER_BUDGETS[norm] || 500_000;
+    const candidates = await resolveActiveProviderChain();
+    if (candidates.length > 0) {
+      for (const c of candidates) {
+        if (!c || c.isActive === false) continue;
+        const norm = c.provider.toLowerCase().replace("google-", "");
+        const budget = PROVIDER_BUDGETS[c.provider] || PROVIDER_BUDGETS[norm] || 1_000_000;
         const existing = byProvider.get(norm) ?? {
           keyCount: 0,
           tokenBudget: 0,

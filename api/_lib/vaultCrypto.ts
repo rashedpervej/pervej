@@ -3,8 +3,10 @@
  * Decrypts encrypted_ai_vault from Supabase in-memory at runtime.
  */
 
-const VAULT_PEPPER = "pervej_portfolio_aes256_gcm_vault_pepper_9921_alpha";
-const VAULT_SALT = "pervej_rashed_vault_salt_secure_2026";
+const VAULT_PEPPER =
+  process.env.VAULT_PEPPER || "pervej_portfolio_aes256_gcm_vault_pepper_9921_alpha";
+const VAULT_SALT =
+  process.env.VAULT_SALT || "pervej_rashed_vault_salt_secure_2026";
 
 function bytesToBase64(bytes: Uint8Array): string {
   if (typeof Buffer !== "undefined") {
