@@ -2111,7 +2111,7 @@ export default function AdminAiVault({ isDemo = false, activeSubTab, onSubTabCha
               {hasProviderKeys && (
                 <button
                   type="button"
-                  onClick={runHealthCheck}
+                  onClick={() => { runHealthCheck(); }}
                   disabled={probingAll}
                   className="text-xs text-[#f2c36b] hover:underline font-cinzel disabled:opacity-50 flex items-center gap-1.5 cursor-pointer font-bold"
                 >

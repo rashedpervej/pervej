@@ -571,10 +571,17 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
     if (isSupabaseConfigured && supabase) {
       try {
         const { data } = await supabase.auth.getSession();
-        if (data?.session?.access_token) {
-          headers["Authorization"] = `Bearer ${data.session.access_token}`;
+        let token = data?.session?.access_token;
+        if (!token) {
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          token = refreshed?.session?.access_token;
         }
-      } catch {}
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+      } catch (err) {
+        console.warn("[Auth] Failed to retrieve session access token:", err);
+      }
     }
     return headers;
   };
@@ -612,7 +619,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
             .select("*")
             .order("created_at", { ascending: false });
 
-          if (!dbError && dbLeads && dbLeads.length > 0) {
+          if (!dbError && dbLeads) {
             loadedLeads = dbLeads;
             fetchedSuccessfully = true;
           } else if (dbError) {
@@ -715,6 +722,13 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || "Failed to delete lead");
+
+      // Safeguard: direct client delete if Supabase is connected and id is a UUID
+      if (isSupabaseConfigured && supabase && !lead.isFallback && !lead.id.startsWith("lead_local_")) {
+        try {
+          await supabase.from("leads").delete().eq("id", lead.id);
+        } catch {}
+      }
 
       setNotification({ type: "success", text: "Lead permanently deleted" });
       setTimeout(() => setNotification(null), 3000);
