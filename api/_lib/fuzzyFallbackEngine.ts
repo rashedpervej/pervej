@@ -252,8 +252,9 @@ export function resolveFuzzyPortfolioFallback(
     };
   }
 
-  // 3f. Portfolio / Work link inquiry
-  if (/\b(link|portfolio|behance|work|kaj|projek|project|dekhan|samples)\b/i.test(normalized)) {
+  // 3f. Explicit Portfolio / Work link inquiry (only when user actively asks for links, never when prohibited)
+  const isNoLinkAsked = /\b(dio\s*na|chara|lagbe\s*na|no\s*link|don't\s*send)\b/i.test(normalized);
+  if (!isNoLinkAsked && /\b(link\s*dao|behance\s*link|portfolio\s*link|dekhan|samples)\b/i.test(normalized)) {
     return {
       text: isBengaliOrBanglish
         ? "নিচের লিংকে ঢুকে আপনি Rashed-এর আপডেটেড Behance প্রজেক্টস ও ডিজাইন কাজ দেখতে পাবেন। কোনো নির্দিষ্ট প্রজেক্ট নিয়ে আলোচনা করতে চাইলে জানাতে পারেন:"
