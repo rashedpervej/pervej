@@ -1118,6 +1118,7 @@ export const DEFAULT_CHATBOT_SETTINGS: ChatbotSettings = {
   showAiBadge: false,
   botBadgeText: "Studio Partner",
   greetingMessage: "Hello! I am Rashed's Creative Advisor. I can answer questions about his 6+ years of design experience, motion graphics skills, brand identity work, or how to hire him for a project. What would you like to know?",
+  returningGreetingMessage: "Welcome back, {name}! Great to have you here again. Feel free to start a new inquiry, discuss design packages, or submit another project brief below. What's on your mind?",
   quickHelpTitle: "How can I help you today?",
   humanPersonaPrompt: "Speak like a warm, courteous, and seasoned senior design visualizer and creative consultant. Chat like a real human design peer sitting across the table. Never use robotic clichés, corporate jargon, or mention that you are an AI model. Be concise (1-3 sentences), engaging, and passionate about typography, packaging, and brand aesthetics.",
   enableStarterChips: true,
@@ -1182,148 +1183,166 @@ export const FALLBACK_SITE_SETTINGS: SiteSettings = {
 
 export const FALLBACK_FAQS: FaqFallbackItem[] = [
   {
-    "id": "faq_role_experience",
-    "shortTitle": "Years of Experience & Role",
-    "question": "What is your current role and years of experience?",
-    "answer": "I am a Senior Visualizer with over 6+ years of dedicated professional design experience (7+ years design journey), currently leading creative brand identity and packaging design at Go Nature BD.",
-    "keywords": ["role", "experience", "senior visualizer", "years", "current job", "background"],
-    "category": "general",
-    "status": "published"
+    id: "faq_branding_deliverables",
+    shortTitle: "Brand Identity Package",
+    question: "What does a complete brand identity package include?",
+    answer: "A full identity package includes primary and secondary logo marks, comprehensive brand guidelines, color system, custom typography pairings, stationery kit, social media templates, and all production-ready vector source files (AI, EPS, SVG, print-ready PDF, PNG).",
+    keywords: ["branding", "brand package", "visual identity", "logo design", "styleguide", "guidelines", "typography", "stationery", "vector files", "লোগো", "ব্র্যান্ডিং", "আইডেন্টিটি"],
+    category: "branding",
+    status: "published"
   },
   {
-    "id": "faq_pricing_approach",
-    "shortTitle": "Pricing & Quotation",
-    "question": "How do you calculate pricing for a project?",
-    "answer": "I work on custom, project-based pricing tailored to your specific deliverables, complexity, and timeline—no rigid hourly fees. Reach out with a short project brief for an exact quotation.",
-    "keywords": ["price", "pricing", "cost", "quote", "budget", "rate", "fee", "how much"],
-    "category": "pricing",
-    "status": "published"
+    id: "faq_brand_modernization",
+    shortTitle: "Logo Modernization",
+    question: "Can you refresh or modernize an existing brand logo?",
+    answer: "Yes! I conduct thorough brand audits to refine, simplify, and modernize existing logos, enhancing digital scalability while preserving established brand recognition and heritage.",
+    keywords: ["logo refresh", "redesign", "modernize", "rebrand", "brand audit", "logo update", "লোগো রিডিজাইন", "আধুনিকায়ন", "লোগো চেঞ্জ"],
+    category: "branding",
+    status: "published"
   },
   {
-    "id": "faq_branding_deliverables",
-    "shortTitle": "Brand Identity Package",
-    "question": "What does a complete brand identity package include?",
-    "answer": "A full identity package includes primary and secondary logos, brand guidelines, color system, custom typography pairings, stationery kits, social media templates, and vector source files (AI, EPS, SVG, PDF, PNG).",
-    "keywords": ["branding", "identity", "brand package", "logo", "styleguide", "guidelines", "typography"],
-    "category": "branding",
-    "status": "published"
+    id: "faq_packaging_dieline",
+    shortTitle: "Print-Ready Dielines",
+    question: "Do you provide print-ready dielines for packaging?",
+    answer: "Yes! I deliver 100% factory-ready dieline files in CMYK with precise bleed margins, crease/cut lines, spot UV layers, emboss/deboss zones, and foil stamp specifications compatible with domestic and international print vendors.",
+    keywords: ["packaging", "dieline", "print ready", "cmyk", "label", "box design", "pouch", "foil stamp", "spot uv", "vendor", "প্যাকেজিং", "ডাইলাইন", "প্রিন্ট ফাইল", "লেবেল"],
+    category: "packaging",
+    status: "published"
   },
   {
-    "id": "faq_packaging_dieline",
-    "shortTitle": "Print-Ready Dielines",
-    "question": "Do you provide print-ready dielines for packaging?",
-    "answer": "Yes! I deliver 100% factory-ready dieline files in CMYK with exact bleed, crease/cut lines, spot UV layers, and foil stamp specifications compatible with professional print vendors.",
-    "keywords": ["packaging", "dieline", "print ready", "cmyk", "label", "box", "bottle", "vendor"],
-    "category": "packaging",
-    "status": "published"
+    id: "faq_supplement_packaging",
+    shortTitle: "Supplement Packaging",
+    question: "Do you specialize in food supplement and health packaging?",
+    answer: "Yes, tactical food supplement, organic healthcare, wellness syrups, and herbal medicine packaging are core specializations, backed by regulatory-compliant typography, ingredient hierarchy, and high-converting 3D visuals.",
+    keywords: ["supplement", "food packaging", "medicine", "herbal", "organic", "healthcare", "wellness", "syrup", "ফুড সাপ্লিমেন্ট", "ঔষধ প্যাকেজিং", "অর্গানিক"],
+    category: "packaging",
+    status: "published"
   },
   {
-    "id": "faq_supplement_packaging",
-    "shortTitle": "Supplement Packaging",
-    "question": "Do you specialize in food supplement and health packaging?",
-    "answer": "Yes, tactical food supplement, organic healthcare, wellness syrups, and herbal medicine packaging are core specializations with high-converting, compliant 3D renders.",
-    "keywords": ["supplement", "food packaging", "medicine", "herbal", "organic", "healthcare", "3d render"],
-    "category": "packaging",
-    "status": "published"
+    id: "faq_3d_product_renders",
+    shortTitle: "3D Product Renders",
+    question: "Do you provide 3D product renders optimized for Amazon, Shopify, and e-commerce?",
+    answer: "Yes! Every packaging project includes photorealistic 3D product renders and lifestyle mockups optimized for Amazon, Shopify, e-commerce listings, and high-converting social media ads.",
+    keywords: ["3d render", "product mockup", "amazon", "shopify", "ecommerce", "packaging 3d", "mockups", "realistic render", "৩ডি রেন্ডার", "মকআপ", "ইকমার্স"],
+    category: "packaging",
+    status: "published"
   },
   {
-    "id": "faq_motion_graphics",
-    "shortTitle": "Motion Graphics & Ads",
-    "question": "Can you create motion graphics and social video ads?",
-    "answer": "Absolutely! I produce dynamic 2D motion graphics, kinetic typography, promotional video ads, Instagram/Facebook Reels, and animated logo reveals using Adobe After Effects.",
-    "keywords": ["motion", "video", "animation", "after effects", "reels", "ads", "promo"],
-    "category": "motion",
-    "status": "published"
+    id: "faq_motion_graphics",
+    shortTitle: "Motion Graphics & Ads",
+    question: "Can you create motion graphics and social video ads?",
+    answer: "Absolutely! I produce dynamic 2D motion graphics, kinetic typography, promotional video ads, vertical Instagram/Facebook Reels, and animated logo reveals using Adobe After Effects.",
+    keywords: ["motion", "video ads", "animation", "after effects", "reels", "ads", "promo", "kinetic typography", "logo reveal", "মোশন গ্রাফিক্স", "ভিডিও অ্যাড", "এনিমেশন"],
+    category: "motion",
+    status: "published"
   },
   {
-    "id": "faq_design_process",
-    "shortTitle": "Design Process & Steps",
-    "question": "What is your step-by-step design workflow?",
-    "answer": "My workflow follows 5 structured steps: 1. Discovery & Project Brief, 2. Market Research & Moodboard, 3. Concept Generation & 3D Mockups, 4. Iterative Client Revisions, and 5. Final Asset Delivery.",
-    "keywords": ["process", "workflow", "steps", "how you work", "phases", "methodology"],
-    "category": "process",
-    "status": "published"
+    id: "faq_design_process",
+    shortTitle: "Design Process & Steps",
+    question: "What is your step-by-step design workflow?",
+    answer: "My workflow follows 5 structured steps: 1. Discovery & Project Brief, 2. Market Research & Moodboard, 3. Concept Generation & 3D Mockups, 4. Iterative Client Revisions, and 5. Final Asset Delivery.",
+    keywords: ["process", "workflow", "steps", "how you work", "phases", "methodology", "design steps", "কাজের ধাপ", "প্রক্রিয়া", "ডিজাইন প্রসেস"],
+    category: "process",
+    status: "published"
   },
   {
-    "id": "faq_turnaround_timeline",
-    "shortTitle": "Delivery Timeline",
-    "question": "What is your typical project delivery timeline?",
-    "answer": "Initial concepts are typically presented within 3 to 5 business days. Full brand identity systems take 5–10 days, while packaging labels or promo videos take approximately 3–6 days.",
-    "keywords": ["timeline", "turnaround", "how long", "delivery", "days", "deadline", "fast"],
-    "category": "process",
-    "status": "published"
+    id: "faq_turnaround_timeline",
+    shortTitle: "Delivery Timeline",
+    question: "What is your typical project delivery timeline?",
+    answer: "Initial concepts are typically presented within 3 to 5 business days. Full brand identity systems take 5–10 days, while packaging labels or promo videos take approximately 3–6 days depending on project scope.",
+    keywords: ["timeline", "turnaround", "how long", "delivery", "days", "deadline", "fast", "urgent", "সময়সীমা", "কতদিন লাগবে", "ডেলিভারি"],
+    category: "process",
+    status: "published"
   },
   {
-    "id": "faq_revision_policy",
-    "shortTitle": "Revision & Polish Policy",
-    "question": "What is your revision and satisfaction policy?",
-    "answer": "I offer unlimited design revisions within the agreed project scope during the active milestone to guarantee you are 100% thrilled with the outcome before final file sign-off.",
-    "keywords": ["revision", "revisions", "changes", "satisfaction", "guarantee", "feedback"],
-    "category": "process",
-    "status": "published"
+    id: "faq_revision_policy",
+    shortTitle: "Revision & Polish Policy",
+    question: "What is your revision and satisfaction policy?",
+    answer: "I provide iterative, collaborative design revisions within the agreed project scope during active milestones to guarantee you are completely satisfied with every visual asset before final file sign-off.",
+    keywords: ["revision", "revisions", "changes", "satisfaction", "guarantee", "feedback", "polish", "corrections", "রিভিশন", "পরিবর্তন", "ফিডব্যাক", "সংশোধন"],
+    category: "process",
+    status: "published"
   },
   {
-    "id": "faq_payment_methods",
-    "shortTitle": "Payment Terms & Methods",
-    "question": "What payment methods and terms do you accept?",
-    "answer": "I accept Bank Wire Transfer, Wise (international), and local mobile banking (bKash/Nagad in Bangladesh). Typical terms are 50% upfront deposit and 50% upon final approval before delivery.",
-    "keywords": ["payment", "bank", "wise", "bkash", "deposit", "terms", "invoice", "pay"],
-    "category": "payment",
-    "status": "published"
+    id: "faq_project_kickoff",
+    shortTitle: "Kickoff Requirements",
+    question: "What information is needed to start a new design project?",
+    answer: "To start smoothly, I need a brief overview of your brand goals, target audience, preferred visual styles, required deliverables/dimensions, and any existing logos or copy. You can submit these directly via our Project Brief form.",
+    keywords: ["brief", "kickoff", "requirements", "start project", "what is needed", "get started", "client brief", "কাজ শুরু", "কী প্রয়োজন", "ব্রিফ", "শুরু করতে কী লাগবে"],
+    category: "process",
+    status: "published"
   },
   {
-    "id": "faq_availability_hours",
-    "shortTitle": "Location & Work Hours",
-    "question": "Where are you located and what are your working hours?",
-    "answer": "I am based in Jashore, Bangladesh (UTC+6) and available for Remote and Hybrid collaborations globally. Standard WhatsApp responses are under 1 hour during active business hours.",
-    "keywords": ["location", "hours", "timezone", "bangladesh", "dhaka", "remote", "availability"],
-    "category": "availability",
-    "status": "published"
+    id: "faq_pricing_approach",
+    shortTitle: "Pricing & Quotation",
+    question: "How do you calculate pricing for a project?",
+    answer: "I work on transparent, custom project-based pricing tailored specifically to your deliverables, scope, and timeline—no rigid hourly fees. Reach out with a short project brief for an exact quotation.",
+    keywords: ["price", "pricing", "cost", "quote", "budget", "rate", "fee", "how much", "charges", "খরচ", "বাজেট", "দাম কত", "কোটেশন", "চার্জ"],
+    category: "pricing",
+    status: "published"
   },
   {
-    "id": "faq_portfolio_behance",
-    "shortTitle": "Portfolio & Case Studies",
-    "question": "Where can I view your latest verified case studies?",
-    "answer": "You can explore comprehensive case studies, branding suites, and packaging renders directly on Behance at behance.net/rashedpervej.",
-    "keywords": ["portfolio", "behance", "case studies", "work", "projects", "samples"],
-    "category": "portfolio",
-    "status": "published"
+    id: "faq_payment_methods",
+    shortTitle: "Payment Terms & Methods",
+    question: "What payment methods and terms do you accept?",
+    answer: "I accept Bank Wire Transfer, Wise (international), and local mobile banking (bKash/Nagad in Bangladesh). Typical terms are 50% upfront deposit and 50% upon final approval before delivery.",
+    keywords: ["payment", "bank", "wise", "bkash", "nagad", "deposit", "terms", "invoice", "pay", "advance", "পেমেন্ট", "বিকাশ", "ব্যাংক", "এডভান্স", "ডিপোজিট"],
+    category: "payment",
+    status: "published"
   },
   {
-    "id": "faq_hire_contact",
-    "shortTitle": "Hire & Direct Contact",
-    "question": "How do I get in touch or hire Rashed directly?",
-    "answer": "You can reach out instantly via WhatsApp at +8801932623969 or email rashedpervej2011@gmail.com with your project brief. You can also book a 1-on-1 discovery call.",
-    "keywords": ["hire", "contact", "whatsapp", "email", "talk to rashed", "meeting", "call"],
-    "category": "contact",
-    "status": "published"
+    id: "faq_commercial_nda",
+    shortTitle: "NDA & Confidentiality",
+    question: "Can you sign a Non-Disclosure Agreement (NDA) before we share our project brief?",
+    answer: "Yes, absolutely. I respect intellectual property and trade confidentiality. I am always happy to review and sign a mutual Non-Disclosure Agreement (NDA) before you share proprietary product details or project briefs.",
+    keywords: ["nda", "confidentiality", "privacy", "agreement", "non disclosure", "secret", "protection", "গোপনীয়তা", "এনডিএ", "চুক্তি", "সিক্রেট"],
+    category: "legal",
+    status: "published"
   },
   {
-    "id": "faq_software_tools",
-    "shortTitle": "Design Software & Tools",
-    "question": "What creative design software do you specialize in?",
-    "answer": "I specialize in Adobe Photoshop, Adobe Illustrator, Adobe After Effects, Canva, CapCut, and modern AI-assisted visual production workflows.",
-    "keywords": ["software", "tools", "photoshop", "illustrator", "after effects", "canva"],
-    "category": "technical",
-    "status": "published"
+    id: "faq_commercial_ownership",
+    shortTitle: "Commercial Rights & Source Files",
+    question: "Will I own full commercial rights and receive vector source files?",
+    answer: "Yes! Upon final payment clearance, you receive 100% full commercial copyright ownership. You will get complete editable vector source files (AI, EPS, SVG) along with high-res PNG, JPG, and print-ready PDFs.",
+    keywords: ["commercial rights", "ownership", "vector files", "source files", "ai", "eps", "copyright", "intellectual property", "মালিকানা", "সোর্স ফাইল", "স্বত্বাধিকার", "কপিরাইট"],
+    category: "legal",
+    status: "published"
   },
   {
-    "id": "faq_brand_modernization",
-    "shortTitle": "Logo Modernization",
-    "question": "Can you refresh or modernize an existing brand logo?",
-    "answer": "Yes! I conduct brand audits to refine existing logos and visual identity elements, enhancing modern scalability while preserving your established brand recognition.",
-    "keywords": ["redesign", "refresh", "modernize", "rebrand", "audit", "logo update"],
-    "category": "branding",
-    "status": "published"
+    id: "faq_professional_background",
+    shortTitle: "Experience & Background",
+    question: "What is your professional background, current role, and experience?",
+    answer: "I am a Senior Visualizer with 7+ years of professional design experience (6+ years in senior leadership). Currently, I lead brand identity and packaging visual direction at Go Nature BD, having previously spent over 3 years leading design teams at Chaldal Ltd.",
+    keywords: ["role", "experience", "senior visualizer", "years", "current job", "background", "go nature bd", "chaldal", "অভিজ্ঞতা", "পদবি", "রাশেদ পারভেজ", "ব্যাকগ্রাউন্ড"],
+    category: "experience",
+    status: "published"
   },
   {
-    "id": "faq_chaldal_experience",
-    "shortTitle": "Chaldal Experience",
-    "question": "Can you describe your experience at Chaldal Ltd.?",
-    "answer": "At Chaldal Ltd., I worked for over 3 years (2020–2023) designing high-impact digital e-commerce campaigns, FMCG brand assets, and leading junior visualizers.",
-    "keywords": ["chaldal", "past experience", "fmcg", "campaigns", "ecommerce"],
-    "category": "general",
-    "status": "published"
+    id: "faq_software_tools",
+    shortTitle: "Design Software & Tools",
+    question: "What creative design software and tools do you specialize in?",
+    answer: "I specialize in industry-standard software including Adobe Illustrator, Photoshop, After Effects, Canva, CapCut, and modern AI-assisted visual production workflows for rapid concept visualization.",
+    keywords: ["software", "tools", "photoshop", "illustrator", "after effects", "canva", "capcut", "ai tools", "design tools", "টুলস", "সফটওয়্যার", "ফটোশপ", "ইলাস্ট্রেটর"],
+    category: "technical",
+    status: "published"
+  },
+  {
+    id: "faq_availability_hours",
+    shortTitle: "Location & Work Hours",
+    question: "Where are you located and what is your remote work availability?",
+    answer: "I am based in Jashore, Bangladesh (UTC+6) and actively available for OnSite, Remote, and Hybrid collaborations globally. Standard inquiry response time is under 1 hour during active business hours.",
+    keywords: ["location", "hours", "timezone", "bangladesh", "dhaka", "jashore", "remote", "hybrid", "availability", "onsite", "অবস্থান", "রিমোট", "টাইমজোন", "কোথায় থাকেন"],
+    category: "availability",
+    status: "published"
+  },
+  {
+    id: "faq_portfolio_behance",
+    shortTitle: "Portfolio & Case Studies",
+    question: "Where can I explore your verified design portfolio and case studies?",
+    answer: "You can explore complete visual identity case studies, packaging dielines, and motion projects on my verified Behance portfolio. Feel free to use the Behance button in this chat to browse directly.",
+    keywords: ["portfolio", "behance", "case studies", "work", "projects", "samples", "view portfolio", "work samples", "পোর্টফোলিও", "কাজের নমুনা", "বেহ্যান্স", "পূর্বের কাজ"],
+    category: "portfolio",
+    status: "published"
   }
 ];
 
