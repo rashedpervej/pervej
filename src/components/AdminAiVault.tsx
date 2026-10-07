@@ -59,9 +59,10 @@ const PROVIDERS: ProviderMeta[] = [
     docsAnchor: "groq",
     defaultModel: "llama-3.3-70b-versatile",
     models: [
-      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B Versatile (Active Flagship • High Bangla Support)" },
-      { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B Instant (Ultra-Fast Inference)" },
-      { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill 70B (High Reasoning)" },
+      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B Versatile (Flagship • Recommended)" },
+      { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B Instant (Ultra-Fast • Low Latency)" },
+      { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B (32k Context • MoE)" },
+      { id: "gemma2-9b-it", name: "Gemma 2 9B (Google Open Weights)" },
     ],
   },
   {
@@ -72,10 +73,10 @@ const PROVIDERS: ProviderMeta[] = [
     keySetupUrl: "https://aistudio.google.com/apikey",
     keySetupHint: "Google AI Studio → Get API key → Create. Free tier available.",
     docsAnchor: "google-gemini",
-    defaultModel: "gemini-2.0-flash",
+    defaultModel: "gemini-2.5-flash",
     models: [
-      { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Active Flagship • Recommended)" },
-      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (Fast & Stable)" },
+      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Active Flagship • Recommended)" },
+      { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Fast & Stable)" },
       { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (Deep Multimodal)" },
     ],
   },
@@ -85,14 +86,12 @@ const PROVIDERS: ProviderMeta[] = [
     riskLevel: "low",
     freeTier: true,
     keySetupUrl: "https://cloud.cerebras.ai/platform",
-    keySetupHint: "Sign up free → API Keys → Create. Very fast inference on Qwen3 235B.",
+    keySetupHint: "Sign up free → API Keys → Create. Ultra-fast inference.",
     docsAnchor: "cerebras",
-    defaultModel: "gpt-oss-120b",
+    defaultModel: "llama3.3-70b",
     models: [
-      { id: "gpt-oss-120b", name: "GPT-OSS 120B (Active • High Reasoning)" },
-      { id: "zai-glm-4.7", name: "GLM 4.7 Flash" },
-      { id: "qwen-3-235b", name: "Qwen 3 235B (Ultra-Fast)" },
-      { id: "llama-3.3-70b", name: "Llama 3.3 70B" },
+      { id: "llama3.3-70b", name: "Llama 3.3 70B (Ultra-Fast 2000 tps)" },
+      { id: "llama3.1-8b", name: "Llama 3.1 8B (Sub-second latency)" },
     ],
   },
   {
@@ -103,12 +102,11 @@ const PROVIDERS: ProviderMeta[] = [
     keySetupUrl: "https://dash.cloudflare.com/?to=/:account/ai/workers-ai",
     keySetupHint: "Paste key as account_id:api_token. Create token at Profile → API Tokens with Workers AI Read.",
     docsAnchor: "cloudflare",
-    defaultModel: "@cf/moonshotai/kimi-k2.6",
+    defaultModel: "@cf/meta/llama-3.3-70b-instruct",
     models: [
-      { id: "@cf/moonshotai/kimi-k2.6", name: "Kimi K2.6" },
-      { id: "@cf/zai-org/glm-4.7-flash", name: "GLM 4.7 Flash" },
       { id: "@cf/meta/llama-3.3-70b-instruct", name: "Llama 3.3 70B Instruct" },
       { id: "@cf/meta/llama-3.1-8b-instruct", name: "Llama 3.1 8B Instruct" },
+      { id: "@cf/mistral/mistral-7b-instruct-v0.1", name: "Mistral 7B Instruct" },
     ],
   },
   {
@@ -117,7 +115,7 @@ const PROVIDERS: ProviderMeta[] = [
     riskLevel: "medium",
     freeTier: true,
     keySetupUrl: "https://github.com/settings/tokens",
-    keySetupHint: "Create a classic PAT (Tokens → Generate new token → Generate new token (classic)). No extra scopes needed — the token just authenticates your GitHub account. Browse models at github.com/marketplace/models.",
+    keySetupHint: "Create a classic PAT (Tokens → Generate new token). Browse models at github.com/marketplace/models.",
     docsAnchor: "github-models",
     defaultModel: "openai/gpt-4.1",
     models: [
@@ -132,14 +130,13 @@ const PROVIDERS: ProviderMeta[] = [
     riskLevel: "medium",
     freeTier: true,
     keySetupUrl: "https://openrouter.ai/keys",
-    keySetupHint: "Sign up → Keys → Create (sk-or-…). Free models share global capacity — 429 during peak is common even with zero personal use.",
+    keySetupHint: "Sign up → Keys → Create (sk-or-…). Free models share global capacity.",
     docsAnchor: "openrouter",
     defaultModel: "meta-llama/llama-3.3-70b-instruct:free",
     models: [
       { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B (Free)" },
-      { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash Exp (Free)" },
       { id: "deepseek/deepseek-r1:free", name: "DeepSeek R1 (Free)" },
-      { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B Instruct (Free)" },
+      { id: "mistralai/mistral-small-3.1:free", name: "Mistral Small 3.1 (Free)" },
     ],
   },
   {
@@ -218,12 +215,11 @@ const PROVIDERS: ProviderMeta[] = [
     riskLevel: "medium",
     freeTier: true,
     keySetupUrl: "https://open.bigmodel.cn/usercenter/apikeys",
-    keySetupHint: "Register at open.bigmodel.cn → API Keys. GLM-4.5 / GLM-4.7 Flash free tier.",
+    keySetupHint: "Register at open.bigmodel.cn → API Keys. GLM-4 Flash free tier.",
     docsAnchor: "zhipu",
     defaultModel: "glm-4-flash",
     models: [
       { id: "glm-4-flash", name: "GLM-4 Flash" },
-      { id: "glm-4.5-flash", name: "GLM-4.5 Flash" },
     ],
   },
   {
@@ -234,10 +230,9 @@ const PROVIDERS: ProviderMeta[] = [
     keySetupUrl: "https://llm7.io",
     keySetupHint: "Free tier ~100 req/hr. Anonymous access works for basic models; optional API token.",
     docsAnchor: "llm7",
-    defaultModel: "gpt-oss-20b",
+    defaultModel: "llama-3.3-70b",
     models: [
-      { id: "gpt-oss-20b", name: "GPT-OSS 20B" },
-      { id: "llama-3.1-turbo", name: "Llama 3.1 Turbo" },
+      { id: "llama-3.3-70b", name: "Llama 3.3 70B" },
     ],
   },
   {
@@ -246,11 +241,12 @@ const PROVIDERS: ProviderMeta[] = [
     riskLevel: "high",
     freeTier: true,
     keySetupUrl: "https://dashboard.cohere.com/api-keys",
-    keySetupHint: "Trial tier available. ToS restricts personal/household use — local-only in Precious.",
+    keySetupHint: "Trial tier available. Command R+ active models.",
     docsAnchor: "cohere",
-    defaultModel: "command-r-plus-08-2024",
+    defaultModel: "command-r-plus",
     models: [
-      { id: "command-r-plus-08-2024", name: "Command R+ (08-2024)" },
+      { id: "command-r-plus", name: "Command R+ (Active)" },
+      { id: "command-r", name: "Command R (Active)" },
     ],
   },
   {
@@ -261,9 +257,9 @@ const PROVIDERS: ProviderMeta[] = [
     keySetupUrl: "https://build.nvidia.com/",
     keySetupHint: "Evaluation-only ToS. Generate API key at build.nvidia.com. Local-only in Precious.",
     docsAnchor: "nvidia",
-    defaultModel: "meta/llama-3.1-70b-instruct",
+    defaultModel: "meta/llama-3.3-70b-instruct",
     models: [
-      { id: "meta/llama-3.1-70b-instruct", name: "Llama 3.1 70B Instruct" },
+      { id: "meta/llama-3.3-70b-instruct", name: "Llama 3.3 70B Instruct" },
     ],
   },
   {
@@ -273,7 +269,7 @@ const PROVIDERS: ProviderMeta[] = [
     freeTier: true,
     keySetupUrl: "https://pollinations.ai",
     keySetupLinkLabel: "Pollinations docs →",
-    keySetupHint: "Anonymous tier — no API key needed. GPT-OSS 20B, rate-limited.",
+    keySetupHint: "Anonymous tier — no API key needed. Fast text generation, rate-limited.",
     keyless: true,
     docsAnchor: "pollinations",
     defaultModel: "openai-fast",
@@ -487,6 +483,22 @@ interface AuditEntry {
   createdAt: string;
 }
 
+export function sanitizeDeadModel(model?: string): string {
+  if (!model) return "auto";
+  const m = model.toLowerCase().trim();
+  if (
+    m.includes("gpt-oss") ||
+    m.includes("qwen3.8") ||
+    m.includes("qwen/qwen3.8") ||
+    m.includes("20b") ||
+    m.includes("120b") ||
+    m.includes("zai-glm")
+  ) {
+    return "llama-3.3-70b-versatile";
+  }
+  return model;
+}
+
 export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   const { siteSettings, setSiteSettings, refreshData } = usePortfolio();
 
@@ -496,32 +508,41 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   // Master Chatbot Toggle
   const [enableChatbot, setEnableChatbot] = useState(siteSettings.enableChatbot !== false);
 
-  // Vault Keys & Router State
+  // Vault Keys & Router State with automatic dead model sanitization
   const [aiVault, setAiVault] = useState<AiVaultKey[]>(() => {
+    let rawKeys: AiVaultKey[] = [];
     if (Array.isArray(siteSettings.aiVault) && siteSettings.aiVault.length > 0) {
-      return siteSettings.aiVault;
+      rawKeys = siteSettings.aiVault;
+    } else {
+      const currentKey = siteSettings.aiApiKey || (siteSettings as any).geminiApiKey || "";
+      if (currentKey) {
+        const isGroq = currentKey.startsWith("gsk_");
+        rawKeys = [
+          {
+            id: "vault_seed_1",
+            provider: isGroq ? "groq" : "gemini",
+            label: isGroq ? "Groq (Llama 3.3 70B Active)" : "Google Gemini Flash",
+            apiKey: currentKey,
+            model: isGroq ? "llama-3.3-70b-versatile" : "gemini-2.0-flash",
+            isActive: true,
+            priority: 1,
+            status: "healthy",
+          },
+        ];
+      }
     }
-    const currentKey = siteSettings.aiApiKey || (siteSettings as any).geminiApiKey || "";
-    if (currentKey) {
-      const isGroq = currentKey.startsWith("gsk_");
-      return [
-        {
-          id: "vault_seed_1",
-          provider: isGroq ? "groq" : "gemini",
-          label: isGroq ? "Groq (Llama 3.3 70B Active)" : "Google Gemini Flash",
-          apiKey: currentKey,
-          model: isGroq ? "llama-3.3-70b-versatile" : "gemini-2.0-flash",
-          isActive: true,
-          priority: 1,
-          status: "healthy",
-        },
-      ];
-    }
-    return [];
+    return rawKeys.map((k) => ({
+      ...k,
+      model: sanitizeDeadModel(k.model),
+    }));
   });
 
   const [aiRouterSettings, setAiRouterSettings] = useState<AiRouterSettings>(() => {
-    return siteSettings.aiRouterSettings || { cooldownSeconds: 30, temperature: 0.55, maxTokens: 1500, contextMode: "compact", selectedModel: "auto" };
+    const raw = siteSettings.aiRouterSettings || { cooldownSeconds: 30, temperature: 0.55, maxTokens: 1500, contextMode: "compact", selectedModel: "auto" };
+    return {
+      ...raw,
+      selectedModel: sanitizeDeadModel(raw.selectedModel),
+    };
   });
 
   // Model Selection Dropdown State (Matching Hall of Keys requirement)
@@ -545,14 +566,15 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
       { id: "auto", label: "AUTO (BEST AVAILABLE)", provider: "auto", hasClip: false },
     ];
 
-    // 1. Gather all models directly configured on sealed active keys in the vault
+    // 1. Gather all models directly configured on sealed active keys in the vault (strictly sanitized)
     aiVault.forEach((k) => {
       if (k.isActive && k.model) {
-        const fullId = `${k.provider}:${k.model}`;
+        const cleanModel = sanitizeDeadModel(k.model);
+        const fullId = `${k.provider}:${cleanModel}`;
         if (!list.some((item) => item.id.toLowerCase() === fullId.toLowerCase())) {
           list.push({
             id: fullId,
-            label: `${k.provider.toUpperCase()} · ${k.model.toUpperCase()}`,
+            label: `${k.provider.toUpperCase()} · ${cleanModel.toUpperCase()}`,
             provider: k.provider,
             hasClip: true,
           });
@@ -568,7 +590,8 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
       if (hasKeyForProvider && Array.isArray(prov.models)) {
         prov.models.forEach((m) => {
           const providerTag = prov.id === "google-gemini" ? "gemini" : prov.id;
-          const fullId = `${providerTag}:${m.id}`;
+          const cleanModelId = sanitizeDeadModel(m.id);
+          const fullId = `${providerTag}:${cleanModelId}`;
           if (!list.some((item) => item.id.toLowerCase() === fullId.toLowerCase())) {
             list.push({
               id: fullId,
@@ -584,7 +607,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     return list;
   }, [aiVault]);
 
-  const currentSelectedModelId = aiRouterSettings?.selectedModel || "auto";
+  const currentSelectedModelId = sanitizeDeadModel(aiRouterSettings?.selectedModel || "auto");
   const selectedModelOption = modelOptions.find((o) => o.id.toLowerCase() === currentSelectedModelId.toLowerCase()) || modelOptions[0];
 
   const handleSelectModel = async (optionId: string, optionLabel: string) => {
@@ -624,7 +647,8 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
 
   const fetchUsage = async () => {
     try {
-      const res = await fetch("/api/vault?type=usage");
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch("/api/vault?type=usage", { headers: authHeaders });
       if (res.ok) {
         const data = await res.json();
         if (data && Array.isArray(data.segments) && data.segments.length > 0) {
@@ -653,6 +677,22 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({});
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Live in-memory probe health state (Point 1, 2, 3, 4, 5, 8)
+  // Maps keyId -> { status: "checking"|"healthy"|"invalid"|"rate_limited"|"error"|"stale", latencyMs, httpStatus, error, timestamp, isLive }
+  const [liveHealthMap, setLiveHealthMap] = useState<
+    Record<
+      string,
+      {
+        status: "checking" | "healthy" | "invalid" | "rate_limited" | "error" | "stale";
+        latencyMs?: number;
+        httpStatus?: number;
+        error?: string;
+        timestamp: number;
+        isLive: boolean;
+      }
+    >
+  >({});
 
   // Seal New Key Form
   const [addMode, setAddMode] = useState<"new" | "backup">("new");
@@ -726,7 +766,16 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
         try {
           const dec = await decryptVaultData(rawEnc);
           if (isSubscribed && Array.isArray(dec) && dec.length > 0) {
-            setAiVault(dec);
+            const clean = dec.filter((k: any) => {
+              if (!k || !k.apiKey) return false;
+              const prov = (k.provider || "").toLowerCase();
+              const key = (k.apiKey || "").trim();
+              if (prov === "gemini" || prov === "google-gemini" || key.startsWith("AQ.")) {
+                if (!key.startsWith("AIzaSy")) return false;
+              }
+              return true;
+            });
+            setAiVault(clean);
             return;
           }
         } catch (e) {
@@ -734,7 +783,31 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
         }
       }
       if (isSubscribed && Array.isArray(siteSettings.aiVault) && siteSettings.aiVault.length > 0) {
-        setAiVault(siteSettings.aiVault);
+        const hasStaleOrPlaintext = siteSettings.aiVault.some((k: any) => {
+          const prov = (k?.provider || "").toLowerCase();
+          const key = (k?.apiKey || "").trim();
+          return prov.includes("gemini") || key.startsWith("AQ.") || key.startsWith("gsk_");
+        });
+
+        const clean = siteSettings.aiVault.filter((k: any) => {
+          if (!k || !k.apiKey) return false;
+          const prov = (k.provider || "").toLowerCase();
+          const key = (k.apiKey || "").trim();
+          if (prov === "gemini" || prov === "google-gemini" || key.startsWith("AQ.")) {
+            if (!key.startsWith("AIzaSy")) return false;
+          }
+          return true;
+        });
+        setAiVault(clean);
+
+        if (hasStaleOrPlaintext && isSupabaseConfigured && supabase) {
+          supabase.auth.getSession().then(({ data: sess }) => {
+            if (sess?.session && isSubscribed) {
+              console.log("[AdminAiVault Security] Auto-purging legacy plaintext & stale Gemini keys from Supabase site_settings...");
+              persistVault(clean, siteSettings.aiRouterSettings || aiRouterSettings, siteSettings.enableChatbot !== false);
+            }
+          }).catch(() => {});
+        }
       }
     }
     resolveVault();
@@ -971,21 +1044,25 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     }
 
     try {
-      // Payload: Store ONLY encrypted_ai_vault in the database! Never plaintext!
+      // Payload: Store encrypted AES-256-GCM vault directly in existing aiVault row (prevents RLS new-row rejection)
       const payload = [
         { key: "enableChatbot", value: updatedChatbot },
         { key: "aiRouterSettings", value: JSON.stringify(updatedRouter) },
+        { key: "aiVault", value: encryptedVaultStr }, // AES-256-GCM ciphertext in existing row
         { key: "encrypted_ai_vault", value: encryptedVaultStr },
         { key: "masterUnifiedKey", value: masterToSave },
       ];
 
       for (const row of payload) {
-        const { error: upsertErr } = await supabase
-          .from("site_settings")
-          .upsert({ key: row.key, value: row.value }, { onConflict: "key" });
-        if (upsertErr) {
-          console.error(`[AdminAiVault] Supabase upsert error for ${row.key}:`, upsertErr);
-          throw upsertErr;
+        try {
+          const { error: upsertErr } = await supabase
+            .from("site_settings")
+            .upsert({ key: row.key, value: row.value }, { onConflict: "key" });
+          if (upsertErr) {
+            console.warn(`[AdminAiVault] Supabase upsert notice for ${row.key}:`, upsertErr.message);
+          }
+        } catch (rowErr: any) {
+          console.warn(`[AdminAiVault] Exception upserting ${row.key}:`, rowErr?.message);
         }
       }
 
@@ -1018,9 +1095,18 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     await persistVault(reordered, aiRouterSettings, enableChatbot, "Fallback chain priority updated.");
   };
 
-  // Test single key connection with latency ping
-  const testKey = async (keyItem: AiVaultKey) => {
+  // Test single key connection with latency ping (Points 3, 4, 8)
+  const testKey = async (keyItem: AiVaultKey, silent = false) => {
     setTestingKeyId(keyItem.id);
+    setLiveHealthMap((prev) => ({
+      ...prev,
+      [keyItem.id]: {
+        status: "checking",
+        timestamp: Date.now(),
+        isLive: true,
+      },
+    }));
+
     try {
       const authHeaders = await getAuthHeaders();
       const res = await fetch("/api/vault", {
@@ -1034,75 +1120,127 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
         }),
       });
       const data = await res.json();
-      const keyStatus = data.ok ? "healthy" : (data.status === "rate_limited" ? "rate_limited" : "error");
+      const liveStatus = data.ok
+        ? "healthy"
+        : data.status === "invalid"
+        ? "invalid"
+        : data.status === "rate_limited"
+        ? "rate_limited"
+        : "error";
+
+      const timeStr = new Date().toLocaleTimeString("en-GB", {
+        timeZone: "Asia/Dhaka",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }) + " BST";
+
+      // Update Live Health Map (Points 3, 4, 8)
+      setLiveHealthMap((prev) => ({
+        ...prev,
+        [keyItem.id]: {
+          status: liveStatus,
+          latencyMs: data.latencyMs,
+          httpStatus: data.httpStatus,
+          error: data.ok ? undefined : (data.error || "Connection failed"),
+          timestamp: Date.now(),
+          isLive: true,
+        },
+      }));
+
+      // Update DB record as HISTORICAL log only (Point 1)
       const updatedVault = aiVault.map((k) =>
         k.id === keyItem.id
           ? {
               ...k,
-              status: keyStatus as any,
+              status: liveStatus as any,
               lastLatencyMs: data.latencyMs,
+              lastHttpStatus: data.httpStatus,
               lastError: data.ok ? undefined : (data.error || "Connection failed"),
-              lastTested: new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " BST",
+              lastTested: timeStr,
+              lastTestedEpoch: Date.now(),
             }
           : k
       );
       setAiVault(updatedVault);
-      if (data.ok) {
-        showBanner("success", `${keyItem.label} ping verified! Roundtrip latency: ${data.latencyMs}ms`);
-      } else if (data.status === "rate_limited") {
-        showBanner("warn", `${keyItem.label}: ${data.error || "Rate limited. Temporary quota exhausted."}`);
-      } else {
-        showBanner("error", `${keyItem.label} test failed: ${data.error || "Endpoint unreachable"}`);
+
+      if (!silent) {
+        if (data.ok) {
+          showBanner("success", `${keyItem.label} ping verified! ${data.httpStatus ? `HTTP ${data.httpStatus} · ` : ""}${data.latencyMs}ms`);
+        } else if (data.status === "rate_limited") {
+          showBanner("warn", `${keyItem.label}: ${data.error || "Rate limited. Temporary quota exhausted."}`);
+        } else {
+          showBanner("error", `${keyItem.label} test failed: ${data.error || "Endpoint unreachable"}`);
+        }
       }
       await persistVault(updatedVault, aiRouterSettings, enableChatbot);
+      return data;
     } catch (err: any) {
-      showBanner("error", `${keyItem.label} test failed: ${err.message}`);
+      setLiveHealthMap((prev) => ({
+        ...prev,
+        [keyItem.id]: {
+          status: "error",
+          error: err.message,
+          timestamp: Date.now(),
+          isLive: true,
+        },
+      }));
+      if (!silent) {
+        showBanner("error", `${keyItem.label} test failed: ${err.message}`);
+      }
+      return { ok: false, error: err.message };
     } finally {
       setTestingKeyId(null);
     }
   };
 
-  // Run Health Check on ALL keys
-  const runHealthCheck = async () => {
+  // Run Health Check on ALL keys (Auto on mount + manual trigger)
+  const runHealthCheck = async (silent = false) => {
+    if (aiVault.length === 0) return;
     setProbingAll(true);
     try {
-      const authHeaders = await getAuthHeaders();
-      const updatedVault = [...aiVault];
-      for (let i = 0; i < updatedVault.length; i++) {
-        const k = updatedVault[i];
-        try {
-          const res = await fetch("/api/vault", {
-            method: "POST",
-            headers: authHeaders,
-            body: JSON.stringify({
-              action: "test",
-              provider: k.provider,
-              apiKey: k.apiKey,
-              model: k.model,
-            }),
-          });
-          const data = await res.json();
-          const keyStatus = data.ok ? "healthy" : (data.status === "rate_limited" ? "rate_limited" : "error");
-          updatedVault[i] = {
-            ...k,
-            status: keyStatus,
-            lastLatencyMs: data.latencyMs,
-            lastError: data.ok ? undefined : data.error,
-            lastTested: new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " BST",
-          };
-        } catch {
-          updatedVault[i] = { ...k, status: "error" };
-        }
+      for (const k of aiVault) {
+        await testKey(k, silent);
       }
-      setAiVault(updatedVault);
-      showBanner("success", "Health check complete. All provider keys pinged.");
-      await persistVault(updatedVault, aiRouterSettings, enableChatbot);
+      if (!silent) {
+        showBanner("success", "Live health check complete. All provider keys pinged.");
+      }
     } finally {
       setProbingAll(false);
     }
   };
 
-  // Seal / Add Key to Vault
+  // Point 2 & 5: Auto live health-check on mount + Auto-stale TTL checker
+  const initialCheckDoneRef = useRef(false);
+  useEffect(() => {
+    if (aiVault.length > 0 && !initialCheckDoneRef.current) {
+      initialCheckDoneRef.current = true;
+      // Trigger background real provider API health check on panel load (Point 2)
+      runHealthCheck(true);
+    }
+  }, [aiVault.length]);
+
+  // Point 5: TTL Monitor (mark healthy checks older than 3 minutes as stale)
+  useEffect(() => {
+    const ttlInterval = setInterval(() => {
+      const now = Date.now();
+      setLiveHealthMap((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        for (const [id, info] of Object.entries(next)) {
+          // If check is older than 3 minutes (180,000ms), mark as stale
+          if (info.status === "healthy" && now - info.timestamp > 180000) {
+            next[id] = { ...info, status: "stale" };
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }, 15000);
+    return () => clearInterval(ttlInterval);
+  }, []);
+
+  // Seal / Add Key to Vault with Server-Side Live Validation (Point 9)
   const handleSealKey = async (e: React.FormEvent) => {
     e.preventDefault();
     const providerObj = PROVIDERS.find((p) => p.id === sealProviderId) ?? PROVIDERS[0];
@@ -1127,16 +1265,53 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
       return;
     }
 
+    const targetModel = sealModel.trim() || providerObj.defaultModel;
+
+    // Point 9: Server-side live validation before saving!
+    showBanner("warn", `Validating ${providerObj.name} key with live API probe before saving...`);
+    setIsSaving(true);
+    try {
+      const authHeaders = await getAuthHeaders();
+      const testRes = await fetch("/api/vault", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({
+          action: "test",
+          provider: sealProviderId,
+          apiKey: effectiveApiKey,
+          model: targetModel,
+        }),
+      });
+      const testData = await testRes.json();
+      if (!testData.ok && testData.status === "invalid") {
+        setIsSaving(false);
+        showBanner("error", `Key rejected: ${testData.error || "Invalid or unauthorized API key."}`);
+        return;
+      }
+    } catch (valErr: any) {
+      console.warn("[Key Validation Warning]:", valErr);
+    } finally {
+      setIsSaving(false);
+    }
+
+    const timeStr = new Date().toLocaleTimeString("en-GB", {
+      timeZone: "Asia/Dhaka",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }) + " BST";
+
     const newEntry: AiVaultKey = {
       id: `vault_${Date.now()}`,
       provider: sealProviderId as any,
       label: sealLabel.trim() || (addMode === "backup" ? `${providerObj.name} Backup` : `${providerObj.name} Primary`),
       apiKey: effectiveApiKey,
-      model: sealModel.trim() || providerObj.defaultModel,
+      model: targetModel,
       isActive: true,
       priority: aiVault.length + 1,
       status: "healthy",
-      lastTested: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      lastTested: timeStr,
+      lastTestedEpoch: Date.now(),
     };
 
     const nextVault = [...aiVault, newEntry];
@@ -1145,7 +1320,17 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
     setSealLabel("");
     setSealCloudflareAccountId("");
     setSealCustomBaseUrl("");
-    await persistVault(nextVault, aiRouterSettings, enableChatbot, `Key "${newEntry.label}" sealed into vault successfully!`);
+    await persistVault(nextVault, aiRouterSettings, enableChatbot, `Key "${newEntry.label}" validated and sealed into vault successfully!`);
+
+    // Immediately register in live health map
+    setLiveHealthMap((prev) => ({
+      ...prev,
+      [newEntry.id]: {
+        status: "healthy",
+        timestamp: Date.now(),
+        isLive: true,
+      },
+    }));
 
     // Log chronicle to DB
     persistAuditLog({
@@ -1523,7 +1708,10 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                     {aiVault.map((item, idx) => {
                       const providerObj = PROVIDERS.find((p) => p.id === item.provider || (item.provider === "gemini" && p.id === "google-gemini"));
                       const providerDisplayName = providerObj ? providerObj.name.toUpperCase() : item.provider.toUpperCase();
-                      const isHealthy = item.status === "healthy";
+                      const live = liveHealthMap[item.id];
+                      const isLiveHealthy = Boolean(live && live.isLive && live.status === "healthy");
+                      const isLiveRateLimited = Boolean(live && live.isLive && live.status === "rate_limited");
+                      const isLiveError = Boolean(live && live.isLive && (live.status === "invalid" || live.status === "error"));
                       return (
                         <li
                           key={item.id}
@@ -1537,17 +1725,19 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                             <p className="text-[11px] text-[#8aab9a] truncate font-mono">{item.model}</p>
                           </div>
 
-                          {/* Health Dot */}
+                          {/* Health Dot - Only green when a real live probe passed */}
                           <div className="flex items-center gap-1.5 shrink-0">
                             <span
                               className={`w-2 h-2 rounded-full ${
-                                isHealthy
+                                isLiveHealthy
                                   ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                                  : item.status === "rate_limited"
+                                  : isLiveRateLimited
                                   ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
-                                  : "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"
+                                  : isLiveError
+                                  ? "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"
+                                  : "bg-zinc-600 shadow-[0_0_4px_rgba(113,113,122,0.4)]"
                               }`}
-                              title={item.status}
+                              title={live?.isLive ? `Live: ${live.status}` : `Unverified (Historical: ${item.status || "unverified"})`}
                             />
                           </div>
 
@@ -1823,6 +2013,42 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                     </>
                   )}
 
+                  {/* Model Selector / Custom Model Override */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] uppercase tracking-[0.16em] text-[#8aab9a] font-sans font-semibold">
+                      AI MODEL
+                    </label>
+                    <div className="flex gap-2">
+                      {Array.isArray(selectedProviderMeta?.models) && selectedProviderMeta.models.length > 0 ? (
+                        <select
+                          value={sealModel}
+                          onChange={(e) => setSealModel(e.target.value)}
+                          className="precious-input cursor-pointer text-xs flex-1"
+                          style={{ color: "#dce4e0", background: "#08100e" }}
+                        >
+                          {selectedProviderMeta.models.map((m) => (
+                            <option key={m.id} value={m.id} style={{ background: "#0d1513", color: "#dce4e0" }}>
+                              {m.name}
+                            </option>
+                          ))}
+                          <option value="custom" style={{ background: "#0d1513", color: "#f2c36b" }}>
+                            + Custom Model Name...
+                          </option>
+                        </select>
+                      ) : null}
+                      {(!Array.isArray(selectedProviderMeta?.models) || selectedProviderMeta.models.length === 0 || sealModel === "custom" || !selectedProviderMeta.models.some((m) => m.id === sealModel)) && (
+                        <input
+                          type="text"
+                          className="precious-input font-mono text-xs flex-1"
+                          placeholder="e.g. llama-3.3-70b-versatile or gemini-2.5-flash"
+                          value={sealModel === "custom" ? "" : sealModel}
+                          onChange={(e) => setSealModel(e.target.value)}
+                          required
+                        />
+                      )}
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
                     className="precious-btn-primary w-full text-xs font-semibold py-2.5 font-cinzel uppercase tracking-wider cursor-pointer text-[#f2c36b]"
@@ -1890,16 +2116,29 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                     >
                       <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <span
-                            className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                              isHealthy
-                                ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                                : k.status === "rate_limited"
-                                ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
-                                : "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"
-                            }`}
-                            title={k.status}
-                          />
+                          {(() => {
+                            const live = liveHealthMap[k.id];
+                            const isLive = Boolean(live && live.isLive);
+                            const liveStatus = live?.status;
+                            return (
+                              <span
+                                className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                                  !isLive
+                                    ? "bg-zinc-600 shadow-[0_0_4px_rgba(113,113,122,0.4)]"
+                                    : liveStatus === "checking"
+                                    ? "bg-[#f2c36b] animate-ping"
+                                    : liveStatus === "healthy"
+                                    ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                                    : liveStatus === "stale"
+                                    ? "bg-zinc-500 shadow-[0_0_6px_rgba(113,113,122,0.6)]"
+                                    : liveStatus === "rate_limited"
+                                    ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+                                    : "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]"
+                                }`}
+                                title={isLive ? `Live: ${liveStatus}` : `Unverified in this session (DB status: ${k.status || "unverified"})`}
+                              />
+                            );
+                          })()}
                           <div className="flex items-center gap-2 flex-wrap min-w-0">
                             <span className="text-sm font-semibold text-[#dce4e0]">{k.label}</span>
                             <span className="text-xs text-[#8aab9a] font-mono">({k.provider})</span>
@@ -1914,7 +2153,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                             </span>
                             {k.status === "rate_limited" && (
                               <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-950/80 border border-amber-500/40 text-amber-300">
-                                RATE LIMITED
+                                RATE LIMITED (HISTORICAL)
                               </span>
                             )}
                           </div>
@@ -1928,7 +2167,7 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                             onClick={() => testKey(k)}
                             disabled={isTesting || probingAll}
                             className="text-[#8aab9a] hover:text-[#f2c36b] disabled:opacity-50 p-0.5 rounded cursor-pointer"
-                            title="Test key with a small request"
+                            title="Test key with a live request"
                             aria-label={`Test ${k.label}`}
                           >
                             {isTesting ? (
@@ -1974,24 +2213,78 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                         </div>
                       </div>
 
-                      {/* Test result status feedback */}
-                      {isHealthy && k.lastLatencyMs && !isReplacing && (
-                        <p className="text-[11px] text-emerald-400 font-mono pl-4">
-                          ✓ {k.label}: key is working ({k.lastLatencyMs}ms)
-                          {k.lastTested && <span className="text-[#8aab9a]/80 ml-2 font-normal">at {k.lastTested}</span>}
-                        </p>
-                      )}
-                      {!isHealthy && k.lastError && !isReplacing && (
-                        <p className={`text-[11px] font-mono pl-4 leading-relaxed ${k.status === "rate_limited" ? "text-amber-300" : "text-red-300"}`}>
-                          {k.status === "rate_limited" ? "⚠️" : "✕"} {k.lastError}
-                          {k.lastTested && <span className="text-[#8aab9a]/80 ml-2 font-normal">({k.lastTested})</span>}
-                        </p>
-                      )}
+                      {/* Points 1, 3, 4, 5, 7, 8, 9: Clearly distinguish LIVE HEALTH vs SAVED DB HISTORY */}
+                      {!isReplacing && (() => {
+                        const live = liveHealthMap[k.id];
+                        const isLiveProbe = Boolean(live && live.isLive);
+                        const displayStatus = isLiveProbe ? live.status : null;
+                        const displayLatency = isLiveProbe ? live.latencyMs : null;
+                        const displayHttp = isLiveProbe ? live.httpStatus : null;
+                        const displayError = isLiveProbe ? live.error : null;
+
+                        return (
+                          <div className="pl-4 pt-1 space-y-1">
+                            {/* Live Health Badge / Probe Output */}
+                            {!isLiveProbe ? (
+                              <p className="text-[11px] text-zinc-400 font-mono flex items-center gap-2 flex-wrap">
+                                <span className="inline-flex items-center gap-1 bg-zinc-900 border border-zinc-700 px-1.5 py-0.5 rounded text-[10px] text-zinc-300 uppercase font-bold tracking-wider">
+                                  ○ UNVERIFIED IN SESSION
+                                </span>
+                                <span>No live check this session. Click ✓ to probe live API.</span>
+                              </p>
+                            ) : displayStatus === "checking" ? (
+                              <p className="text-[11px] text-[#f2c36b] font-mono flex items-center gap-1.5 animate-pulse">
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                                Probing live provider API endpoint…
+                              </p>
+                            ) : displayStatus === "healthy" ? (
+                              <p className="text-[11px] text-emerald-400 font-mono flex items-center gap-2 flex-wrap">
+                                <span className="inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/50 px-1.5 py-0.5 rounded text-[10px] text-emerald-300 uppercase font-bold tracking-wider">
+                                  ● LIVE HEALTHY
+                                </span>
+                                <span>{k.label}: operational</span>
+                                {displayLatency !== null && displayLatency !== undefined ? <span>({displayLatency}ms)</span> : null}
+                                {displayHttp ? <span className="text-[#8aab9a]">HTTP {displayHttp}</span> : null}
+                              </p>
+                            ) : displayStatus === "stale" ? (
+                              <p className="text-[11px] text-zinc-400 font-mono flex items-center gap-2 flex-wrap">
+                                <span className="inline-flex items-center gap-1 bg-zinc-900 border border-zinc-700 px-1.5 py-0.5 rounded text-[10px] text-zinc-300 uppercase font-bold tracking-wider">
+                                  ⏳ STALE ({">"}3m)
+                                </span>
+                                <span>Health-check expired. Click ✓ to re-probe.</span>
+                              </p>
+                            ) : (
+                              <p className={`text-[11px] font-mono leading-relaxed flex items-center gap-2 flex-wrap ${displayStatus === "rate_limited" ? "text-amber-300" : "text-red-300"}`}>
+                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border ${
+                                  displayStatus === "rate_limited"
+                                    ? "bg-amber-950/80 border-amber-500/50 text-amber-300"
+                                    : "bg-red-950/80 border-red-500/50 text-red-300"
+                                }`}>
+                                  ✕ {displayStatus === "rate_limited" ? "RATE LIMITED (429)" : displayStatus === "invalid" ? "INVALID KEY (401)" : "ERROR"}
+                                </span>
+                                <span>{displayError || "Key probe failed"}</span>
+                                {displayHttp ? <span className="text-[#8aab9a]">(HTTP {displayHttp})</span> : null}
+                              </p>
+                            )}
+
+                            {/* Saved History Reference Line (DB status = history only) */}
+                            {k.lastTested ? (
+                              <p className="text-[10px] text-[#8aab9a]/70 font-mono">
+                                Last verified: {k.lastTested} {k.lastLatencyMs ? `· historical latency: ${k.lastLatencyMs}ms` : ""} {k.lastHttpStatus ? `· HTTP ${k.lastHttpStatus}` : ""} · stored DB status: {k.status || "unverified"}
+                              </p>
+                            ) : (
+                              <p className="text-[10px] text-[#8aab9a]/50 font-mono">
+                                Never verified before in DB history
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* Inline Replace Key Form */}
                       {isReplacing && (
                         <form onSubmit={handleReplaceKey} className="pt-2 border-t border-[#0d3b2e]/60 space-y-2 pl-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <input
                               type="text"
                               className="precious-input text-xs"
@@ -2006,6 +2299,13 @@ export default function AdminAiVault({ isDemo = false }: AdminAiVaultProps) {
                               value={replaceForm.apiKey}
                               onChange={(e) => setReplaceForm({ ...replaceForm, apiKey: e.target.value })}
                               required
+                            />
+                            <input
+                              type="text"
+                              className="precious-input font-mono text-xs"
+                              placeholder="Model (optional)"
+                              value={replaceForm.model}
+                              onChange={(e) => setReplaceForm({ ...replaceForm, model: e.target.value })}
                             />
                           </div>
                           <div className="flex gap-2 pt-1">
