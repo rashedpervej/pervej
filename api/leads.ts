@@ -78,6 +78,7 @@ interface AuthResult {
   error?: string;
   status: number;
   user?: any;
+  token?: string;
 }
 
 async function verifyAdminAuth(req: Request, requiredMessage = "Admin privileges required."): Promise<AuthResult> {
@@ -107,7 +108,7 @@ async function verifyAdminAuth(req: Request, requiredMessage = "Admin privileges
 
     const isOwner = user.email === "rashedpervej2011@gmail.com" || user.email === "admin@portfolio.com";
     if (isOwner) {
-      return { authorized: true, status: 200, user };
+      return { authorized: true, status: 200, user, token };
     }
 
     const { data: roleData, error: roleError } = await authClient
@@ -118,28 +119,53 @@ async function verifyAdminAuth(req: Request, requiredMessage = "Admin privileges
       .maybeSingle();
 
     if (roleData && !roleError) {
-      return { authorized: true, status: 200, user };
+      return { authorized: true, status: 200, user, token };
     }
 
-    return { authorized: false, error: `Forbidden: ${requiredMessage}`, status: 403, user };
+    return { authorized: false, error: `Forbidden: ${requiredMessage}`, status: 403, user, token };
   } catch (err: any) {
     return { authorized: false, error: err?.message || "Auth verification failure.", status: 500 };
   }
 }
 
-function getSupabase() {
+function getSupabase(token?: string) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
   if (
     !supabaseUrl || 
-    !supabaseAnonKey || 
     supabaseUrl === "https://your-supabase-project.supabase.co"
   ) {
     return null;
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey);
+  // 1. If backend service role key is present, use it directly (bypasses RLS with full authority)
+  if (serviceRoleKey) {
+    return createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+
+  if (!supabaseAnonKey) {
+    return null;
+  }
+
+  // 2. Attach Admin's validated JWT Bearer token so Supabase PostgREST executes under role 'authenticated'
+  // and public.is_admin() evaluates to true for owner/admin
+  const options: any = {
+    auth: { persistSession: false, autoRefreshToken: false },
+  };
+
+  if (token) {
+    options.global = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, options);
 }
 
 // GET /api/leads - Merges local leads and Supabase leads (Protected: Admin Only)
@@ -149,7 +175,7 @@ export async function getLeads(req: Request, res: Response) {
     return res.status(auth.status).json({ success: false, error: auth.error });
   }
 
-  const supabase = getSupabase();
+  const supabase = getSupabase(auth.token);
   const isSupabaseConfigured = Boolean(supabase);
   try {
     const localLeads = readLeadsLocal();
@@ -158,7 +184,7 @@ export async function getLeads(req: Request, res: Response) {
 
     if (supabase) {
       try {
-        // Fetch from "leads" table
+        // Fetch from "leads" table as authenticated admin
         const { data, error } = await supabase
           .from("leads")
           .select("*")
@@ -209,62 +235,63 @@ export async function getLeads(req: Request, res: Response) {
             }
           });
         }
+
+        // Replicate any unsynced local leads into Supabase so database is the single source of truth across all devices
+        if (localLeads.length > 0 && !dbError) {
+          for (const localLead of localLeads) {
+            const existsInDb = supabaseLeads.some((sl) => {
+              const sameEmail = (sl.email || "").toLowerCase() === (localLead.email || "").toLowerCase();
+              const sameSubject = (sl.subject || "").trim().toLowerCase() === (localLead.subject || "").trim().toLowerCase();
+              const timeDiff = Math.abs(new Date(sl.created_at).getTime() - new Date(localLead.created_at).getTime());
+              return sameEmail && (sameSubject || timeDiff < 60000);
+            });
+
+            if (!existsInDb) {
+              try {
+                const { data: insertedData, error: insertErr } = await supabase
+                  .from("leads")
+                  .insert({
+                    name: localLead.name,
+                    email: localLead.email,
+                    phone: localLead.phone || null,
+                    company: localLead.company || null,
+                    subject: localLead.subject,
+                    message: localLead.message,
+                    status: localLead.status || "new",
+                    notes: localLead.notes || "",
+                    visitor_ip: localLead.visitor_ip || null,
+                    created_at: localLead.created_at || new Date().toISOString()
+                  })
+                  .select()
+                  .single();
+
+                if (!insertErr && insertedData) {
+                  supabaseLeads.unshift(insertedData);
+                }
+              } catch (e) {
+                // Ignore replication error
+              }
+            }
+          }
+        }
       } catch (err: any) {
         dbError = err.message;
         console.error("Supabase leads fetch exception:", err);
       }
     }
 
-    // Merge localLeads and supabaseLeads
-    // We use a Map to deduplicate based on email, subject, and close timestamps, or IDs
-    const mergedMap = new Map<string, any>();
-
-    // Add local leads first (they are always current)
-    localLeads.forEach((l) => {
-      // Create a unique signature key for matching potential duplicates
-      const sig = `${l.email.toLowerCase()}_${l.subject.toLowerCase().replace(/\s+/g, "")}`;
-      mergedMap.set(l.id, l);
-      mergedMap.set(sig, l); // store by signature too
-    });
-
-    // Add supabase leads, merging with local ones if they match the signature
-    supabaseLeads.forEach((s) => {
-      const sig = `${s.email.toLowerCase()}_${s.subject.toLowerCase().replace(/\s+/g, "")}`;
-      const existing = mergedMap.get(sig);
-
-      if (existing) {
-        // If we have a local copy and a remote copy, merge them. Keep any updated notes/status from remote if we want.
-        // Usually local file has the latest status if it failed to save to Supabase.
-        // Let's replace the signature entry with a combined version but keep the Supabase ID for database actions.
-        const merged = {
-          ...existing,
-          id: s.id, // Prefer the Supabase ID so updates/deletes go to Supabase
-          status: s.status || existing.status,
-          notes: s.notes || existing.notes || s.notes,
-          supabaseSynced: true,
-          isFallback: s.isFallback
-        };
-        mergedMap.set(existing.id, merged);
-        mergedMap.set(s.id, merged);
-        mergedMap.set(sig, merged);
-      } else {
-        mergedMap.set(s.id, {
-          ...s,
-          supabaseSynced: true
-        });
-      }
-    });
-
-    // Reconstruct list keeping unique records by ID
-    const finalLeadsList: any[] = [];
-    const seenIds = new Set<string>();
-
-    mergedMap.forEach((lead) => {
-      if (!seenIds.has(lead.id)) {
-        seenIds.add(lead.id);
-        finalLeadsList.push(lead);
-      }
-    });
+    // Determine authoritative leads list:
+    // If Supabase is connected and working without dbError, Supabase is the single source of truth.
+    // If Supabase is unavailable or encountered an error, fall back to local disk leads.
+    let finalLeadsList: any[] = [];
+    if (isSupabaseConfigured && !dbError) {
+      finalLeadsList = supabaseLeads.map((l) => ({
+        ...l,
+        supabaseSynced: true
+      }));
+    } else {
+      finalLeadsList = localLeads;
+    }
 
     // Sort by created_at descending
     finalLeadsList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -288,7 +315,7 @@ export async function updateLead(req: Request, res: Response) {
     return res.status(auth.status).json({ success: false, error: auth.error });
   }
 
-  const supabase = getSupabase();
+  const supabase = getSupabase(auth.token);
   try {
     const { id, status, notes, isFallback } = req.body;
 
@@ -317,7 +344,8 @@ export async function updateLead(req: Request, res: Response) {
             .from("leads")
             .update({
               ...(status && { status }),
-              ...(notes !== undefined && { notes })
+              ...(notes !== undefined && { notes }),
+              updated_at: new Date().toISOString()
             })
             .eq("id", id);
 
@@ -384,7 +412,7 @@ export async function deleteLead(req: Request, res: Response) {
     return res.status(auth.status).json({ success: false, error: auth.error });
   }
 
-  const supabase = getSupabase();
+  const supabase = getSupabase(auth.token);
   try {
     const { id, isFallback } = req.body;
 

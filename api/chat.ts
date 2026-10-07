@@ -605,6 +605,8 @@ export default async function handler(req: any, res: any) {
             apiKey: baseKey.apiKey,
             model: modPart,
             priority: 0,
+            source: baseKey.source,
+            isActive: true,
           });
         }
       }
