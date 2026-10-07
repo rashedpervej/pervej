@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "timestamp": 1791035909155,
-  "lastSyncIso": "2026-10-03T13:58:29.155Z",
+  "timestamp": 1791367698314,
+  "lastSyncIso": "2026-10-07T10:08:18.314Z",
   "source": "supabase_sync",
   "sections": [
     {
@@ -422,7 +422,7 @@
           "name": "Chaldal PLC",
           "market": "Bangladesh",
           "country": "Bangladesh",
-          "logoUrl": "https://www.startupbangladesh.vc/wp-content/uploads/2021/07/Chaldal-BrandID-2021.png",
+          "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/poc3z1czjcr-1791284504796.png",
           "logoText": "Chaldal Ltd.",
           "brandName": "Chaldal PLC"
         },
@@ -437,7 +437,10 @@
         {
           "name": "Go Nature",
           "market": "Bangladesh",
-          "logoText": "Go Nature BD"
+          "country": "Bangladesh",
+          "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/ze5ydz4jn-1791284740324.png",
+          "logoText": "Go Nature BD",
+          "brandName": "Go Nature"
         },
         {
           "name": "Basumati Group",
@@ -506,7 +509,7 @@
           "name": "Chaldal PLC",
           "market": "Bangladesh",
           "country": "Bangladesh",
-          "logoUrl": "https://www.startupbangladesh.vc/wp-content/uploads/2021/07/Chaldal-BrandID-2021.png",
+          "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/poc3z1czjcr-1791284504796.png",
           "logoText": "Chaldal Ltd.",
           "brandName": "Chaldal PLC"
         },
@@ -521,7 +524,10 @@
         {
           "name": "Go Nature",
           "market": "Bangladesh",
-          "logoText": "Go Nature BD"
+          "country": "Bangladesh",
+          "logoUrl": "https://ngeaqabzlerwjxvcyucd.supabase.co/storage/v1/object/public/portfolio-assets/portfolio/ze5ydz4jn-1791284740324.png",
+          "logoText": "Go Nature BD",
+          "brandName": "Go Nature"
         },
         {
           "name": "Basumati Group",
@@ -1080,6 +1086,193 @@
     "customCss": "",
     "enableChatbot": true,
     "marqueeSpeed": 25,
+    "chatbotSettings": {
+      "botName": "Creative Advisor",
+      "botSubtitle": "Online • Replies in real-time",
+      "showAiBadge": true,
+      "botBadgeText": "Studio Partner",
+      "welcomeTitle": "Welcome",
+      "actionButtons": [
+        {
+          "id": "cta_behance",
+          "url": "https://be.net/rashedpervej",
+          "type": "behance",
+          "label": "Behance",
+          "order": 1,
+          "primary": true,
+          "isActive": true,
+          "pillIcon": "🎨",
+          "showAsQuickPill": true,
+          "triggerKeywords": [
+            "portfolio",
+            "behance",
+            "be.net",
+            "case study",
+            "case studies",
+            "work",
+            "projects",
+            "kaj",
+            "কাজ",
+            "প্রজেক্ট",
+            "দেখতে চাই",
+            "লিংক"
+          ]
+        },
+        {
+          "id": "cta_brief",
+          "type": "brief",
+          "label": "Submit Project Brief",
+          "order": 2,
+          "primary": false,
+          "isActive": true,
+          "pillIcon": "📝",
+          "showAsQuickPill": true,
+          "triggerKeywords": [
+            "brief",
+            "quote",
+            "korte cai",
+            "quotation",
+            "hire",
+            "শুরু করতে চাই",
+            "কোটেশন",
+            "ব্রিফ",
+            "হায়ার",
+            "প্রজেক্ট শুরু"
+          ]
+        },
+        {
+          "id": "cta_whatsapp",
+          "url": "https://wa.me/8801932623969?text=Hi%20Rashed%2C%20I%20saw%20your%20portfolio%20and%20would%20like%20to%20discuss%20a%20project.",
+          "type": "whatsapp",
+          "label": "WhatsApp Rashed",
+          "order": 3,
+          "primary": false,
+          "isActive": true,
+          "pillIcon": "💬",
+          "showAsQuickPill": true,
+          "triggerKeywords": [
+            "whatsapp",
+            "chat",
+            "call",
+            "phone",
+            "number",
+            "যোগাযোগ",
+            "কথা বলতে চাই",
+            "হোয়াটসঅ্যাপ",
+            "নাম্বার"
+          ]
+        },
+        {
+          "id": "cta_email",
+          "url": "mailto:rashedpervej2011@gmail.com?subject=Project%20%2F%20Career%20Inquiry%20via%20Portfolio",
+          "type": "email",
+          "label": "Email Rashed",
+          "order": 4,
+          "primary": false,
+          "isActive": true,
+          "pillIcon": "✉️",
+          "showAsQuickPill": false,
+          "triggerKeywords": [
+            "email",
+            "mail",
+            "ইমেইল",
+            "মেইল"
+          ]
+        }
+      ],
+      "botAvatarIcon": "sparkles",
+      "maxQuickPills": 3,
+      "quickHelpTitle": "How can I help you today?",
+      "welcomeLogoUrl": "",
+      "greetingMessage": "Hello! I am Rashed's Creative Advisor. I can answer questions about his 7+ years of design experience, motion graphics skills, brand identity work, or how to hire him for a project. What would you like to know?",
+      "maxStarterChips": 4,
+      "welcomeSubtitle": "Let’s chat together",
+      "enableQuickPills": true,
+      "starterQuestions": [
+        {
+          "id": "portfolio",
+          "icon": "🎨",
+          "label": "View Portfolio",
+          "order": 1,
+          "query": "view portfolio",
+          "isBrief": false,
+          "isActive": true,
+          "isFaqToggle": false
+        },
+        {
+          "id": "project",
+          "icon": "💼",
+          "label": "Discuss a Project",
+          "order": 2,
+          "isBrief": true
+        },
+        {
+          "id": "questions",
+          "icon": "💬",
+          "label": "Ask a Question",
+          "order": 3,
+          "isActive": false,
+          "isFaqToggle": true
+        },
+        {
+          "id": "quote",
+          "icon": "💰",
+          "label": "Get an Estimate",
+          "order": 4,
+          "query": "How much does a project typically cost?",
+          "isActive": false
+        }
+      ],
+      "enablePreChatGate": true,
+      "enablePromptBrief": true,
+      "welcomeButtonText": "Chat Now",
+      "enableStarterChips": true,
+      "humanPersonaPrompt": "Speak like a warm, courteous, and seasoned senior design visualizer and creative consultant. Chat like a real human design peer sitting across the table. Never use robotic clichés, corporate jargon, or mention that you are an AI model. Be concise (1-3 sentences), engaging, and passionate about typography, packaging, and brand aesthetics.",
+      "projectBriefSettings": {
+        "categories": [
+          "Brand Identity",
+          "Packaging Design",
+          "Motion Graphics",
+          "Full Brand & Pack"
+        ],
+        "scopeLabel": "Project Scope / Key Deliverables",
+        "step1Title": "What are we making?",
+        "step2Title": "Where do I reach you?",
+        "successTitle": "Project Brief Received!",
+        "budgetOptions": [
+          "< $500",
+          "$500 - $1.5k",
+          "$1.5k - $3k",
+          "$3k+"
+        ],
+        "step1Subtitle": "Pick what fits. You can add detail next.",
+        "step2Subtitle": "Takes about 15 seconds.",
+        "successMessage": "Rashed has been notified with your project specifications and will review your scope promptly.",
+        "timelineOptions": [
+          {
+            "hint": "Under 2 weeks",
+            "label": "Urgent",
+            "value": "Urgent (< 2 wks)"
+          },
+          {
+            "hint": "2–4 weeks",
+            "label": "Standard",
+            "value": "Standard (2-4 wks)"
+          },
+          {
+            "hint": "No fixed date",
+            "label": "Flexible",
+            "value": "Flexible"
+          }
+        ],
+        "scopePlaceholder": "A few lines on what you need designed.",
+        "submitButtonText": "Send Project Brief",
+        "whatsappButtonText": "Chat Now on WhatsApp",
+        "enableFlexibleBudget": true,
+        "confidentialityNotice": "Strictly confidential. Direct communication with Rashed."
+      },
+      "enableProgressiveLeadGate": true
+    },
     "projectSettings": {
       "showYear": false,
       "showLiveUrl": false,
@@ -1098,13 +1291,6 @@
       "showFilterMarketing": true,
       "showProjectDuration": false,
       "showFilterInternational": true
-    },
-    "aiRouterSettings": {
-      "cooldownSeconds": 30,
-      "temperature": 0.55,
-      "maxTokens": 750,
-      "selectedModel": "gemini:gemini-3.8-flash",
-      "contextMode": "compact"
     },
     "defaultTheme": "dark",
     "chatTrainingRules": [
@@ -1207,7 +1393,6 @@
         "priority": 11,
         "instruction": "Visualizer\nFull-Time\nSheba Platform Ltd.\nJan 2024 – Sep 2024\nJashore, Bangladesh\n\n\nLed the Jashore creative team, managing daily design operations and maintaining high creative standards.\n\nDesigned digital and print marketing assets, including paid ads, motion graphics, promotional videos, and brand collateral.\n\nDelivered creative solutions across ShebaPay, SManager, SBusiness, FinTech, and other business brands while maintaining strict brand consistency.\n\nCollaborated with marketing teams and presented creative concepts to senior leadership, including the CEO.\n\nMaintained brand guidelines and optimized creative workflows for timely project delivery."
       }
-    ],
-    "ai_audit_logs": "[{\"action\":\"key_deleted\",\"resourceType\":\"key\",\"resourceId\":\"vault_1790609379560\",\"metadata\":{\"providerId\":\"gemini\",\"keyLabel\":\"Gemini API Key 2 -bot - backup\"},\"id\":\"chronicle_1790612549836_2rqi\",\"createdAt\":\"2026-09-28T16:22:29.836Z\"},{\"action\":\"unified_key_created\",\"resourceType\":\"key\",\"resourceId\":\"prec_master\",\"metadata\":{\"keyLabel\":\"Unified Master Key\"},\"id\":\"chronicle_1790612452683_gl9d\",\"createdAt\":\"2026-09-28T16:20:52.683Z\"},{\"action\":\"unified_key_created\",\"resourceType\":\"key\",\"resourceId\":\"prec_master\",\"metadata\":{\"keyLabel\":\"Unified Master Key\"},\"id\":\"chronicle_1790612438791_4nt9\",\"createdAt\":\"2026-09-28T16:20:38.791Z\"}]"
+    ]
   }
 }
