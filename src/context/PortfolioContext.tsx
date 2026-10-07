@@ -57,16 +57,18 @@ export type BackgroundStyle =
 
 export interface AiVaultKey {
   id: string;
-  provider: "groq" | "gemini" | "openrouter" | "openai";
+  provider: "groq" | "gemini" | "openrouter" | "openai" | string;
   label: string;
   apiKey: string;
   model: string;
   isActive: boolean;
   priority: number;
-  status?: "healthy" | "cooldown" | "error" | "standby" | "rate_limited";
+  status?: "healthy" | "cooldown" | "error" | "standby" | "rate_limited" | "invalid" | "checking" | "stale";
   lastTested?: string;
+  lastTestedEpoch?: number;
   lastLatencyMs?: number;
   lastError?: string;
+  lastHttpStatus?: number;
 }
 
 export interface AiRouterSettings {
@@ -75,6 +77,73 @@ export interface AiRouterSettings {
   maxTokens?: number;
   contextMode?: "compact" | "full";
   selectedModel?: string;
+}
+
+export interface ChatActionButton {
+  id: string;
+  label: string;
+  type: "behance" | "whatsapp" | "email" | "brief" | "link";
+  url?: string;
+  triggerKeywords: string[];
+  showAsQuickPill: boolean;
+  pillIcon?: string;
+  primary?: boolean;
+  isActive: boolean;
+  order: number;
+}
+
+export interface StarterQuestionItem {
+  id: string;
+  label: string;
+  icon: string;
+  query?: string;
+  isBrief?: boolean;
+  isFaqToggle?: boolean;
+  isActive?: boolean;
+  order?: number;
+}
+
+export interface ProjectBriefSettings {
+  step1Title?: string;
+  step1Subtitle?: string;
+  step2Title?: string;
+  step2Subtitle?: string;
+  categories?: string[];
+  budgetOptions?: string[];
+  enableFlexibleBudget?: boolean;
+  timelineOptions?: Array<{ value: string; label: string; hint?: string }>;
+  scopeLabel?: string;
+  scopePlaceholder?: string;
+  confidentialityNotice?: string;
+  submitButtonText?: string;
+  successTitle?: string;
+  successMessage?: string;
+  whatsappButtonText?: string;
+}
+
+export interface ChatbotSettings {
+  botName?: string;
+  botSubtitle?: string;
+  botAvatarIcon?: string;
+  showAiBadge?: boolean;
+  botBadgeText?: string;
+  greetingMessage?: string;
+  quickHelpTitle?: string;
+  humanPersonaPrompt?: string;
+  enableStarterChips?: boolean;
+  maxStarterChips?: number;
+  enableQuickPills?: boolean;
+  maxQuickPills?: number;
+  enablePreChatGate?: boolean;
+  enablePromptBrief?: boolean;
+  enableProgressiveLeadGate?: boolean;
+  welcomeTitle?: string;
+  welcomeSubtitle?: string;
+  welcomeButtonText?: string;
+  welcomeLogoUrl?: string;
+  actionButtons?: ChatActionButton[];
+  starterQuestions?: StarterQuestionItem[];
+  projectBriefSettings?: ProjectBriefSettings;
 }
 
 export interface SiteSettings {
@@ -101,6 +170,7 @@ export interface SiteSettings {
   chatTrainingRules?: any[];
   customPriceGuidelines?: string;
   faviconUrl?: string;
+  chatbotSettings?: ChatbotSettings;
 }
 
 interface PortfolioContextType {
@@ -512,7 +582,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           if (row.key === "marqueeSpeed" && typeof val === "string" && !isNaN(Number(val))) {
             val = Number(val);
           }
-          if (row.key === "aiRouterSettings" && typeof val === "string") {
+          if (
+            (row.key === "aiRouterSettings" ||
+              row.key === "chatbotSettings" ||
+              row.key === "chatTrainingRules") &&
+            typeof val === "string"
+          ) {
             try {
               val = JSON.parse(val);
             } catch (e) {}
