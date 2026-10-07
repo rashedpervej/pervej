@@ -128,10 +128,15 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
       }
 
       if (Array.isArray(faqsRes) && faqsRes.length > 0) {
-        faqsList = faqsRes.map((f: any) => ({
-          question: cleanText(f.question),
-          answer: cleanText(f.answer),
-        }));
+        faqsList = faqsRes
+          .filter((f: any) => {
+            const q = (f.question || "").toLowerCase().trim();
+            return q !== "view portfolio" && q !== "how many years of experience do you have?";
+          })
+          .map((f: any) => ({
+            question: cleanText(f.question),
+            answer: cleanText(f.answer),
+          }));
       }
 
       if (Array.isArray(settingsRes) && settingsRes.length > 0) {
@@ -278,7 +283,27 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
     }
   }
 
-  // Fallback FAQs if not populated from Supabase
+  // Supplement with snapshot.json FAQs to ensure full curated coverage
+  try {
+    const snapshotPath = path.join(process.cwd(), "data", "snapshot.json");
+    if (fs.existsSync(snapshotPath)) {
+      const snap = JSON.parse(fs.readFileSync(snapshotPath, "utf-8"));
+      if (Array.isArray(snap.faqs) && snap.faqs.length > 0) {
+        const existingQs = new Set(faqsList.map((f) => f.question.toLowerCase().trim()));
+        for (const sf of snap.faqs) {
+          if (sf?.question && sf?.answer && !existingQs.has(sf.question.toLowerCase().trim())) {
+            faqsList.push({
+              question: cleanText(sf.question),
+              answer: cleanText(sf.answer),
+            });
+            existingQs.add(sf.question.toLowerCase().trim());
+          }
+        }
+      }
+    }
+  } catch (_) {}
+
+  // Fallback FAQs if not populated from Supabase or snapshot
   if (faqsList.length === 0) {
     faqsList = [
       {
