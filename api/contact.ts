@@ -195,7 +195,7 @@ export default async function contactHandler(req: Request, res: Response) {
     if (supabase) {
       try {
         console.log("Supabase is configured. Attempting to replicate lead to Supabase 'leads' table...");
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("leads")
           .insert({
             name,
@@ -207,13 +207,10 @@ export default async function contactHandler(req: Request, res: Response) {
             visitor_ip: ip,
             status: "new",
             notes: ""
-          })
-          .select();
+          });
 
-        if (!error && data && data.length > 0) {
+        if (!error) {
           savedMethod = "local_and_supabase_leads";
-          // Store Supabase's ID in local record for direct sync if wanted,
-          // or we can use the local one.
           console.log("Successfully replicated lead to Supabase 'leads' table.");
         } else {
           const errMsg = error?.message || "Unknown error";
@@ -221,7 +218,7 @@ export default async function contactHandler(req: Request, res: Response) {
           dbErrorMsg = errMsg;
 
           // Fallback to "analytics_events"
-          const { data: fallbackData, error: fallbackError } = await supabase
+          const { error: fallbackError } = await supabase
             .from("analytics_events")
             .insert({
               event_type: "lead_submit",
@@ -237,10 +234,9 @@ export default async function contactHandler(req: Request, res: Response) {
                 notes: "",
                 created_at: new Date().toISOString()
               }
-            })
-            .select();
+            });
 
-          if (!fallbackError && fallbackData && fallbackData.length > 0) {
+          if (!fallbackError) {
             savedMethod = "local_and_supabase_events_fallback";
             console.log("Successfully replicated lead to Supabase 'analytics_events' table as fallback.");
           } else {

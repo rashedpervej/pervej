@@ -378,13 +378,27 @@ function buildSystemInstruction(
     }
   }
 
-  // 2. Pure dynamic context
+  // 2. Dynamic Action Buttons from Admin
+  let actionButtonsSection = "";
+  if (Array.isArray(chatbotSettings?.actionButtons) && chatbotSettings.actionButtons.length > 0) {
+    const activeButtons = chatbotSettings.actionButtons.filter((b: any) => b && b.isActive !== false);
+    if (activeButtons.length > 0) {
+      actionButtonsSection =
+        `\n=== AVAILABLE ACTION BUTTONS / CTAS (CONFIGURED IN ADMIN) ===\n` +
+        `If the visitor's query naturally calls for an action (e.g. asking to see Behance portfolio, start a project brief, email, or WhatsApp), you may optionally include a CTA tag [ACTION: type] at the end:\n` +
+        activeButtons.map((b: any) => `- [ACTION: ${b.type}] -> ${b.label}`).join("\n") +
+        `\nOnly use when genuinely helpful. Do not attach unprompted on casual conversation.\n\n`;
+    }
+  }
+
+  // 3. Pure dynamic context
   return `You are ${botName} (${botSubtitle}).
 You converse thoughtfully, naturally, and professionally with visitors about Rashed Pervej, his creative visual design work, and project collaboration.
 Think before you respond: understand the visitor's genuine intent, match their language seamlessly (English, Bengali, or Banglish), and chat like a natural creative peer without robotic questionnaire lists.
 
 ${customPersona ? `=== LIVE ADMIN PERSONA & VOICE DIRECTIVES ===\n${customPersona}\n` : ""}
 ${adminRulesSection}
+${actionButtonsSection}
 === STRICT SCOPE GUARD ===
 You only answer questions concerning Rashed Pervej, his design portfolio, creative services, professional background, and project collaboration. Decline unrelated topics politely:
 "${OUT_OF_SCOPE_RESPONSE}"
@@ -440,78 +454,14 @@ function formatGeminiContents(history: any[], currentMessage: string) {
  */
 function generateDirectAnswer(query: string, history: any[], data: any): string | null {
   const q = query.toLowerCase().trim();
-  const rawQ = query.trim();
 
-  // Find conversation turns in history for complete context memory
-  let allUserTurns = "";
-  let lastUserTurn = "";
-  if (Array.isArray(history) && history.length > 0) {
-    const userTurns = history.filter((h) => h && (h.role === "user" || h.role === "human"));
-    if (userTurns.length > 0) {
-      allUserTurns = userTurns.map((h) => (h.content || h.text || "").toLowerCase().trim()).join(" ");
-      lastUserTurn = (userTurns[userTurns.length - 1].content || userTurns[userTurns.length - 1].text || "").toLowerCase().trim();
-    }
-  }
-
-  const fullContext = `${allUserTurns} ${q}`;
-
-  // Bengali / Banglish detection (check both current query and conversation history context)
-  const isBengaliScript = /[\u0980-\u09FF]/.test(fullContext);
-  const banglishRegex =
-    /\b(koren|kore|kori|korte|koro|korbo|koto|kobe|koi|chai|chay|ache|achhe|ase|lagbe|lagve|hobe|jani|bolen|amake|amar|apnar|apni|tumi|tomar|ki|keno|kemon|kothay|shuru|bhalo|darun|dhaka|jashore|dam|khoroch|somoy|duita|ekta|duti|ta|tate|korsen|kortesi|korchen|dao|den|din|acho|achen|achis|bhai|vai|dekhan|bolo)\b/i;
-  const isBanglish = banglishRegex.test(fullContext);
-  const isBengaliOrBanglish = isBengaliScript || isBanglish;
-
-  // Normalization for common typos
-  const normalized = q
-    .replace(/pakaging|packging|pakeging/g, "packaging")
-    .replace(/desing|dizain|dezign/g, "design")
-    .replace(/brnding|barnding|barnd/g, "branding")
-    .replace(/softwer|sofware|tuls/g, "software")
-    .replace(/suplement|suplemnt/g, "supplement")
-    .replace(/lagve/g, "lagbe")
-    .replace(/experiance|experince/g, "experience");
-
-  // 1. Natural Short Greetings (Tolerant of typo repetitions like hii, heyy, hei)
-  if (
-    /^(h+i+|h+e+y+|hell+o+|hei+|hiya|heya|hola|yo|good\s*(morning|afternoon|evening)|হাই|হ্যালো|হেই|নমস্কার)\b/i.test(q) ||
-    /^(hi+|he+y+|hell+o+|hei+)\s+(there|bot|bro|rashed|bhai)?$/i.test(q)
-  ) {
-    if (isBengaliOrBanglish) {
-      return "হ্যালো! কেমন আছেন? Rashed-এর পোর্টফোলিও, ডিজাইন সার্ভিস বা নতুন কোনো প্রজেক্ট নিয়ে কি জানতে চাচ্ছেন?";
-    }
-    return "Hi there! How can I help you today? Looking to explore Rashed's design work, or planning a project?";
-  }
-
-  // 1b. Islamic Salam & Greeting Check
-  if (
-    /\b(assalamu\s*alaikum|as-salamu\s*alaikum|salam|slaam|সালাম|আসসালামু\s*আলাইকুম|কেমন\s*আছেন|কেমন\s*আছো|kemon\s*achen|kemon\s*acho|kemon\s*achis|ki\s*obostha|kemon\s*aso)\b/i.test(q) &&
-    q.split(/\s+/).length <= 4
-  ) {
-    if (/salam|সালাম/i.test(q)) {
-      return "ওয়ালাইকুমুস সালাম! কেমন আছেন? Rashed-এর ডিজাইন কাজ, পোর্টফোলিও বা প্রজেক্ট নিয়ে কীভাবে সাহায্য করতে পারি?";
-    }
-    return "হ্যালো! ভালো আছি, ধন্যবাদ। Rashed-এর পোর্টফোলিও বা ডিজাইন সংক্রান্ত কোনো বিষয়ে জানতে চান?";
-  }
-
-  // 1c. Politeness & Acknowledgements (Thanks, Ok, Accha, Dhonyobad)
-  if (
-    /^(thanks?|thank\s*you|thnx|ty|dhonyobad|dhonnobad|shukriya|ধন্যবাদ|শুকরিয়া|ok|okay|k|got\s*it|thik\s*ache|accha|acha|thik\s*ase)$/i.test(q) ||
-    /^(thanks?|thank\s*you|dhonyobad|dhonnobad)\s+(a\s*lot|so\s*much|vai|bhai|bro)?$/i.test(q)
-  ) {
-    if (isBengaliOrBanglish) {
-      return "আপনাকে অনেক ধন্যবাদ ও স্বাগতম! 😊 Rashed-এর কাজ বা প্রজেক্ট নিয়ে আর কোনো কিছু জানতে চাইলে নির্দ্বিধায় বলতে পারেন।";
-    }
-    return "You're very welcome! 😊 Feel free to ask if there's anything else you'd like to explore about Rashed's work or project collaboration.";
-  }
-
-  // 2. Direct Grounded Match with verified FAQ Database (Only strict exact FAQ questions)
+  // Strict direct match ONLY with verified FAQ Database created in Admin (/admin)
+  // No hardcoded canned greetings, polite phrases, or scripted replies anywhere.
   if (Array.isArray(data?.faqs) && data.faqs.length > 0) {
     const cleanQ = q.replace(/[^a-z0-9]/g, " ").trim();
     for (const faq of data.faqs) {
       if (!faq?.question || !faq?.answer) continue;
       const faqQ = faq.question.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
-      // Strict exact match only: if user is asking conversational variations, let the dynamic AI model handle with full persona
       if (faqQ.length > 5 && faqQ === cleanQ) {
         return faq.answer.trim();
       }
