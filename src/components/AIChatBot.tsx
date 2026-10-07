@@ -154,8 +154,7 @@ function cleanDisplayContent(text: string): string {
   // 3. Remove markdown link wrapper if it wrapped a URL, keeping just readable text
   cleaned = cleaned.replace(/\[([^\]]+)\]\((?:https?:\/\/[^\)]+|mailto:[^\)]+)\)/g, "$1");
 
-  // 4. Clean up any awkward dangling link labels or dangling colons/punctuations left behind
-  cleaned = cleaned.replace(/(?:এখানে\s+)?(?:Rashed[-‑]এর\s+)?(?:সম্পূর্ণ\s+)?পোর্টফোলিও(?:\s*(?:লিঙ্ক|লিংক|link|url))?\s*:\s*[।\.]?/gi, "নিচের লিংকে ঢুকে আপনি আপডেটেড প্রজেক্টস দেখতে পাবেন। ");
+  // 4. Clean up any trailing empty colons
   cleaned = cleaned.replace(/:\s*[।\.]/g, "।");
   cleaned = cleaned.replace(/[।\.]\s*([।\.])/g, "$1");
 
@@ -211,20 +210,19 @@ function getImplicitActions(text: string, dynamicButtons?: ChatActionButton[]): 
   }
 
   // 2. Intelligent Built-in Fallbacks if specific actions were not triggered by keywords
-  // Portfolio / Behance
+  // Portfolio / Behance (Only when explicitly directing to Behance or link, not on generic conversation)
   if (!actions.some((a) => a.type === "behance")) {
-    const hasPortfolioIntent =
-      lower.includes("behance") ||
-      lower.includes("be.net") ||
-      lower.includes("আপডেটেড প্রজেক্ট") ||
-      lower.includes("আপডেটেড প্ৰজেক্ট") ||
-      lower.includes("নিচের লিংকে") ||
-      lower.includes("লিংকে ঢুকে") ||
-      lower.includes("portfolio link") ||
-      lower.includes("portfolio") ||
-      (lower.includes("portfolio") && (lower.includes("check") || lower.includes("view") || lower.includes("explore") || lower.includes("দেখতে")));
+    const hasNegativeLinkIntent = lower.includes("লিংক ছাড়া") || lower.includes("link chara") || lower.includes("no link") || lower.includes("লিংক দিচ্ছি না");
+    const hasExplicitPortfolioLinkIntent =
+      !hasNegativeLinkIntent &&
+      (lower.includes("behance") ||
+       lower.includes("be.net") ||
+       lower.includes("নিচের লিংকে ঢুকে") ||
+       lower.includes("behance লিংক") ||
+       lower.includes("portfolio link") ||
+       lower.includes("view work on behance"));
 
-    if (hasPortfolioIntent) {
+    if (hasExplicitPortfolioLinkIntent) {
       actions.push({
         label: "View on Behance",
         type: "behance",
