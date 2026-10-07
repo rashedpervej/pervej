@@ -97,15 +97,56 @@ function isValidSnapshot(body: any): boolean {
   return true;
 }
 
+// Explicit allowlist of settings keys that are safe to expose publicly
+const PUBLIC_SETTINGS_ALLOWLIST = new Set([
+  "seoTitle",
+  "seoDescription",
+  "seoKeywords",
+  "ogTitle",
+  "ogDescription",
+  "ogImage",
+  "ogUrl",
+  "primaryColor",
+  "defaultTheme",
+  "enableChatbot",
+  "faviconUrl",
+  "marqueeSpeed",
+  "backgroundStyle",
+  "projectSettings",
+  "cvUrl",
+  "cvFileName",
+  "cvSource",
+  "customCss",
+  "chatbotSettings",
+  "chatTrainingRules",
+  "customPriceGuidelines"
+]);
+
 function sanitizeSiteSettings(settings: any): any {
   if (!settings || typeof settings !== "object" || Array.isArray(settings)) return {};
   const sanitized: Record<string, any> = {};
-  const sensitiveKeyPattern = /(vault|secret|api_?key|master|token|password|auth|prec_|smtp)/i;
+  const sensitiveKeyPattern = /(vault|secret|api_?key|master|token|password|auth|prec_|smtp|audit_log)/i;
+  
   for (const [key, value] of Object.entries(settings)) {
+    // 1. Must be in the known public allowlist OR explicitly safe non-internal setting
+    if (!PUBLIC_SETTINGS_ALLOWLIST.has(key)) continue;
+
+    // 2. Extra safety: deny any pattern with sensitive words or audit logs
     if (sensitiveKeyPattern.test(key)) continue;
-    if (typeof value === "string" && (value.startsWith("enc:v1:") || value.startsWith("prec_") || value.startsWith("sk-") || value.startsWith("gsk_") || value.startsWith("csk-") || value.startsWith("AIzaSy"))) {
+
+    // 3. Deny raw encrypted tokens or API keys if accidentally placed in an allowed key
+    if (
+      typeof value === "string" &&
+      (value.startsWith("enc:v1:") ||
+        value.startsWith("prec_") ||
+        value.startsWith("sk-") ||
+        value.startsWith("gsk_") ||
+        value.startsWith("csk-") ||
+        value.startsWith("AIzaSy"))
+    ) {
       continue;
     }
+
     sanitized[key] = value;
   }
   return sanitized;

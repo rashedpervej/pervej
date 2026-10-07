@@ -3,42 +3,8 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import { getPortfolioKnowledge, getStructuredPortfolioData, cleanText } from "./_lib/chatKnowledge.js";
 import { recordAuditLog, recordTokenUsage } from "./_lib/auditTracker.js";
-
-function getAvailableApiKeys(dbKey?: string | null): string[] {
-  const keys: string[] = [];
-  if (dbKey && typeof dbKey === "string" && dbKey.trim() && !dbKey.startsWith("MY_")) {
-    keys.push(dbKey.trim());
-  }
-  const envCandidates = [
-    process.env.GROQ_API_KEY,
-    process.env.GEMINI_API_KEY,
-    process.env.VITE_GEMINI_API_KEY,
-  ];
-  for (const k of envCandidates) {
-    if (k && typeof k === "string" && k.trim() && !k.startsWith("MY_") && !keys.includes(k.trim())) {
-      keys.push(k.trim());
-    }
-  }
-  // Read any valid keys from .env directly as fallback
-  try {
-    const envPath = path.join(process.cwd(), ".env");
-    if (fs.existsSync(envPath)) {
-      const content = fs.readFileSync(envPath, "utf-8");
-      const matches = content.matchAll(/(?:GEMINI_API_KEY|GROQ_API_KEY)\s*=\s*(.+)/g);
-      for (const m of matches) {
-        if (m && m[1]) {
-          const parsedKey = m[1].trim().replace(/^["']|["']$/g, "");
-          if (parsedKey && !parsedKey.startsWith("MY_") && !keys.includes(parsedKey)) {
-            keys.push(parsedKey);
-          }
-        }
-      }
-    }
-  } catch (e) {
-    // ignore
-  }
-  return keys;
-}
+import { resolveActiveProviderChain, ResolvedKeyCandidate } from "./_lib/centralKeyResolver.js";
+import { resolveFuzzyPortfolioFallback } from "./_lib/fuzzyFallbackEngine.js";
 
 // Precious-style Multi-Provider In-Memory Cooldown Tracker
 const providerCooldowns = new Map<string, number>();
@@ -91,31 +57,47 @@ async function getLiveGroqModels(apiKey: string): Promise<string[]> {
   return [];
 }
 
+function sanitizeGroqModelName(model?: string): string {
+  if (!model) return "llama-3.3-70b-versatile";
+  const m = model.toLowerCase().trim();
+  if (
+    m.includes("gpt-oss") ||
+    m.includes("qwen") ||
+    m.includes("120b") ||
+    m.includes("20b") ||
+    m.includes("27b") ||
+    m.includes("zai-glm") ||
+    m.startsWith("gemini") ||
+    m.startsWith("google")
+  ) {
+    return "llama-3.3-70b-versatile";
+  }
+  return model.trim();
+}
+
 async function resolveDynamicGroqModel(apiKey: string, preferredModel?: string): Promise<{ primary: string; fallback: string }> {
   const envModel = process.env.GROQ_MODEL;
   if (envModel && envModel.trim()) {
-    return { primary: envModel.trim(), fallback: "llama-3.1-8b-instant" };
+    return { primary: sanitizeGroqModelName(envModel), fallback: "llama-3.1-8b-instant" };
   }
+
+  const sanitizedPref = sanitizeGroqModelName(preferredModel);
 
   const live = await getLiveGroqModels(apiKey);
   if (live.length > 0) {
-    if (preferredModel && live.includes(preferredModel.trim())) {
-      const fb = live.find((m) => m !== preferredModel.trim() && m.includes("8b")) || live[0];
-      return { primary: preferredModel.trim(), fallback: fb };
+    if (sanitizedPref && live.includes(sanitizedPref)) {
+      const fb = live.find((m) => m !== sanitizedPref && (m.includes("8b") || m.includes("instant"))) || live[0];
+      return { primary: sanitizedPref, fallback: fb };
     }
-    const top70b = live.find((m) => m.includes("70b") && !m.includes("specdec"));
-    const top8b = live.find((m) => m.includes("8b")) || live[0];
-    if (top70b) {
-      return { primary: top70b, fallback: top8b };
+    const topVersatile = live.find((m) => m.includes("llama-3.3-70b") || m.includes("versatile") || m.includes("70b"));
+    const top8b = live.find((m) => m.includes("8b") || m.includes("instant")) || live[0];
+    if (topVersatile) {
+      return { primary: topVersatile, fallback: top8b };
     }
     return { primary: live[0], fallback: top8b };
   }
 
-  const cleanPref = preferredModel?.trim();
-  if (cleanPref && !cleanPref.includes("oss") && !cleanPref.includes("120b") && !cleanPref.includes("20b") && !cleanPref.startsWith("gemini")) {
-    return { primary: cleanPref, fallback: "llama-3.1-8b-instant" };
-  }
-  return { primary: "llama-3.3-70b-versatile", fallback: "llama-3.1-8b-instant" };
+  return { primary: sanitizedPref || "llama-3.3-70b-versatile", fallback: "llama-3.1-8b-instant" };
 }
 
 async function getLiveGeminiModels(apiKey: string): Promise<string[]> {
@@ -135,7 +117,7 @@ async function getLiveGeminiModels(apiKey: string): Promise<string[]> {
       if (Array.isArray(data?.models)) {
         const textModels = data.models
           .map((m: any) => (m.name || "").replace(/^models\//, ""))
-          .filter((name: string) => name.startsWith("gemini") && name.includes("flash") && !name.includes("embedding"));
+          .filter((name: string) => name.startsWith("gemini") && !name.includes("embedding"));
         if (textModels.length > 0) {
           discoveredGeminiModels.set(apiKey, { models: textModels, timestamp: Date.now() });
           return textModels;
@@ -151,28 +133,29 @@ async function getLiveGeminiModels(apiKey: string): Promise<string[]> {
 async function resolveDynamicGeminiModel(apiKey: string, preferredModel?: string): Promise<{ primary: string; fallback: string }> {
   const envModel = process.env.GEMINI_MODEL;
   if (envModel && envModel.trim()) {
-    return { primary: envModel.trim(), fallback: "gemini-1.5-flash" };
+    return { primary: envModel.trim(), fallback: "gemini-2.5-flash" };
+  }
+
+  const cleanPref = preferredModel?.trim();
+  if (cleanPref && cleanPref.startsWith("gemini")) {
+    return { primary: cleanPref, fallback: "gemini-2.5-flash" };
   }
 
   const live = await getLiveGeminiModels(apiKey);
   if (live.length > 0) {
-    if (preferredModel && live.includes(preferredModel.trim())) {
-      const fb = live.find((m) => m !== preferredModel.trim() && m.includes("1.5")) || live[0];
-      return { primary: preferredModel.trim(), fallback: fb };
+    if (cleanPref && live.includes(cleanPref)) {
+      const fb = live.find((m) => m !== cleanPref && m.includes("flash")) || live[0];
+      return { primary: cleanPref, fallback: fb };
     }
-    const flash2 = live.find((m) => m.includes("2.0-flash") || m.includes("2.5-flash"));
-    const flash15 = live.find((m) => m.includes("1.5-flash")) || live[0];
-    if (flash2) {
-      return { primary: flash2, fallback: flash15 };
+    const modernFlash = live.find((m) => m.includes("2.5-flash") || m.includes("flash"));
+    const flashFallback = live.find((m) => m !== modernFlash && m.includes("flash")) || live[0];
+    if (modernFlash) {
+      return { primary: modernFlash, fallback: flashFallback };
     }
-    return { primary: live[0], fallback: flash15 };
+    return { primary: live[0], fallback: flashFallback };
   }
 
-  const cleanPref = preferredModel?.trim();
-  if (cleanPref && cleanPref.startsWith("gemini") && !cleanPref.includes("3.8") && !cleanPref.includes("2.5")) {
-    return { primary: cleanPref, fallback: "gemini-1.5-flash" };
-  }
-  return { primary: "gemini-2.0-flash", fallback: "gemini-1.5-flash" };
+  return { primary: "gemini-2.5-flash", fallback: "gemini-2.0-flash" };
 }
 
 // Universal OpenAI-compatible completion adapter (Groq, OpenRouter, OpenAI, etc.)
@@ -340,8 +323,11 @@ function isClearlyOutOfScope(text: string): boolean {
     return true;
   }
 
-  // Weather / medical / health diagnosis
-  if (/(weather in|weather forecast|forecast for|temperature in)\s+/i.test(t)) {
+  // Weather / medical / health diagnosis / general off-topic
+  if (/(weather|temperature|forecast|today'?s\s*date|news|stock|price\s*of\s*(gold|bitcoin)|cricket|football|match|score)/i.test(t)) {
+    return true;
+  }
+  if (/^(who|what|when|where)\s+(is|was|are|were)\s+(the\s+)?(prime\s*minister|president|capital|ceo|winner)\b/i.test(t)) {
     return true;
   }
   if (/(diagnose|medical advice|symptoms of|cure for)\s+/i.test(t)) {
@@ -367,7 +353,7 @@ const OUT_OF_SCOPE_RESPONSE =
  * Builds the comprehensive system instruction dynamically injected with live portfolio data.
  * Configured for natural human conversational behavior across English, Bengali, and Banglish.
  */
-function buildSystemInstruction(knowledgeBase: string, isCompact = false, trainingRules: any[] = []): string {
+function buildSystemInstruction(knowledgeBase: string, isCompact = false, trainingRules: any[] = [], chatbotSettings?: any): string {
   let customDirectives = "";
   if (Array.isArray(trainingRules) && trainingRules.length > 0) {
     const activeRules = trainingRules.filter((r: any) => r && r.isActive !== false);
@@ -377,9 +363,16 @@ function buildSystemInstruction(knowledgeBase: string, isCompact = false, traini
     }
   }
 
-  if (isCompact) {
-    return `You are the official creative representative and personal portfolio assistant for Rashed Pervej, an experienced Senior Visualizer, Brand Identity Designer, Packaging Specialist, and Motion Graphics Artist from Bangladesh (6+ years industry experience).
+  let humanPersonaDirectives = "";
+  if (chatbotSettings?.humanPersonaPrompt && typeof chatbotSettings.humanPersonaPrompt === "string" && chatbotSettings.humanPersonaPrompt.trim()) {
+    humanPersonaDirectives = `\n=== LIVE ADMIN HUMAN PERSONA & VOICE DIRECTIVES ===\n${chatbotSettings.humanPersonaPrompt.trim()}\n`;
+  }
 
+  const botTitle = chatbotSettings?.botName ? `${chatbotSettings.botName} (portfolio partner for Rashed Pervej)` : "official creative representative and personal portfolio assistant for Rashed Pervej";
+
+  if (isCompact) {
+    return `You are the ${botTitle}, an experienced Senior Visualizer, Brand Identity Designer, Packaging Specialist, and Motion Graphics Artist from Bangladesh (6+ years industry experience).
+${humanPersonaDirectives}
 === CORE CONVERSATIONAL RULES ===
 1. HUMAN CONVERSATION (PING-PONG): Chat warmly like a creative design peer. Keep replies under 35 words. Never dump questionnaire lists. Ask at most ONE short question to keep dialogue natural.
 2. MULTI-LINGUAL: Naturally understand and reply in Banglish, Bengali script (বাংলা), or English matching the user's language.
@@ -398,9 +391,9 @@ ${knowledgeBase}
 `;
   }
 
-  return `You are the official creative representative and personal portfolio assistant for Rashed Pervej.
+  return `You are the ${botTitle}.
 Rashed is an experienced Senior Visualizer, Brand Identity Designer, Packaging Specialist, and Motion Graphics Artist from Bangladesh with over 6+ years of industry experience (7+ years design journey), having worked with top brands like Go Nature BD, Chaldal Ltd., Sheba Platform Ltd., and international clients in the US and Europe.
-
+${humanPersonaDirectives}
 === CORE PERSONA & CONVERSATIONAL PHILOSOPHY ===
 1. HUMAN CONVERSATION (PING-PONG, NOT AN INTERROGATION OR QUESTIONNAIRE):
    - You chat like a warm, creative, friendly design peer sitting across the table.
@@ -421,11 +414,10 @@ Rashed is an experienced Senior Visualizer, Brand Identity Designer, Packaging S
      - If the user writes in English, reply in natural, concise English.
    - Understand typos and abbreviations without correcting the user.
 
-3. CONCISE BREVITY (STRICT WORD LIMIT):
-   - Keep answers between 20 to 45 words maximum.
-   - Simple greetings ("hi", "hello", "salam"): reply in 1 short sentence.
-   - Service questions ("packaging koren?", "motion graphics?"): reply in 2 short sentences.
-   - Project proposals ("new project korte cai"): respond with enthusiasm in 2 sentences, asking ONLY what type of design they need.
+3. NATURAL ADAPTIVE CONVERSATION:
+   - For simple greetings ("hi", "salam"): reply warmly in 1-2 natural sentences.
+   - For specific questions about services, tools, or process: give a direct, informative, and engaging answer. Be concise and conversational, avoid unnecessary filler, and never overwhelm with long questionnaire lists.
+   - Ask AT MOST ONE relevant question to keep dialogue moving forward naturally.
 
 4. NO PREMATURE CONTACT DUMPING:
    - Do NOT provide phone numbers, email, or WhatsApp links unless the user explicitly asks for contact details or asks how to reach Rashed.
@@ -567,7 +559,7 @@ function generateDirectAnswer(query: string, history: any[], data: any): string 
   // Bengali / Banglish detection (check both current query and conversation history context)
   const isBengaliScript = /[\u0980-\u09FF]/.test(fullContext);
   const banglishRegex =
-    /\b(koren|kore|kori|korte|koro|korbo|koto|kobe|koi|chai|chay|ache|achhe|ase|lagbe|lagve|hobe|jani|bolen|amake|amar|apnar|apni|tumi|tomar|ki|keno|kemon|kothay|shuru|bhalo|darun|dhaka|jashore|dam|khoroch|somoy|duita|ekta|duti|ta|tate|korsen|kortesi|korchen)\b/i;
+    /\b(koren|kore|kori|korte|koro|korbo|koto|kobe|koi|chai|chay|ache|achhe|ase|lagbe|lagve|hobe|jani|bolen|amake|amar|apnar|apni|tumi|tomar|ki|keno|kemon|kothay|shuru|bhalo|darun|dhaka|jashore|dam|khoroch|somoy|duita|ekta|duti|ta|tate|korsen|kortesi|korchen|dao|den|din|acho|achen|achis|bhai|vai|dekhan|bolo)\b/i;
   const isBanglish = banglishRegex.test(fullContext);
   const isBengaliOrBanglish = isBengaliScript || isBanglish;
 
@@ -581,10 +573,10 @@ function generateDirectAnswer(query: string, history: any[], data: any): string 
     .replace(/lagve/g, "lagbe")
     .replace(/experiance|experince/g, "experience");
 
-  // 1. Natural Short Greetings
+  // 1. Natural Short Greetings (Tolerant of typo repetitions like hii, heyy, hei)
   if (
-    /^(hi|hello|hey|hiya|heyy|heya|hola|yo|good\s*morning|good\s*afternoon|good\s*evening|হাই|হ্যালো|হেই|নমস্কার)$/i.test(q) ||
-    /^(hi|hello|hey)\s+(there|bot|bro|rashed|bhai)?$/i.test(q)
+    /^(h+i+|h+e+y+|hell+o+|hei+|hiya|heya|hola|yo|good\s*(morning|afternoon|evening)|হাই|হ্যালো|হেই|নমস্কার)\b/i.test(q) ||
+    /^(hi+|he+y+|hell+o+|hei+)\s+(there|bot|bro|rashed|bhai)?$/i.test(q)
   ) {
     if (isBengaliOrBanglish) {
       return "হ্যালো! কেমন আছেন? Rashed-এর পোর্টফোলিও, ডিজাইন সার্ভিস বা নতুন কোনো প্রজেক্ট নিয়ে কি জানতে চাচ্ছেন?";
@@ -594,7 +586,7 @@ function generateDirectAnswer(query: string, history: any[], data: any): string 
 
   // 1b. Islamic Salam & Greeting Check
   if (
-    /\b(assalamu\s*alaikum|as-salamu\s*alaikum|salam|slaam|সালাম|আসসালামু\s*আলাইকুম|কেমন\s*আছেন|kemon\s*achen|ki\s*obostha|kemon\s*aso)\b/i.test(q) &&
+    /\b(assalamu\s*alaikum|as-salamu\s*alaikum|salam|slaam|সালাম|আসসালামু\s*আলাইকুম|কেমন\s*আছেন|কেমন\s*আছো|kemon\s*achen|kemon\s*acho|kemon\s*achis|ki\s*obostha|kemon\s*aso)\b/i.test(q) &&
     q.split(/\s+/).length <= 4
   ) {
     if (/salam|সালাম/i.test(q)) {
@@ -603,110 +595,25 @@ function generateDirectAnswer(query: string, history: any[], data: any): string 
     return "হ্যালো! ভালো আছি, ধন্যবাদ। Rashed-এর পোর্টফোলিও বা ডিজাইন সংক্রান্ত কোনো বিষয়ে জানতে চান?";
   }
 
-  // 2. Direct Contact Info Request (Only when user explicitly asks for contact numbers/methods)
+  // 1c. Politeness & Acknowledgements (Thanks, Ok, Accha, Dhonyobad)
   if (
-    q.length < 50 &&
-    (
-      normalized.includes("contact") ||
-      normalized.includes("email") ||
-      normalized.includes("phone") ||
-      normalized.includes("whatsapp") ||
-      normalized.includes("jogajog") ||
-      normalized.includes("number") ||
-      normalized.includes("kotha bolbo") ||
-      normalized.includes("যোগাযোগ") ||
-      normalized.includes("যোগাযোগের") ||
-      normalized.includes("কথা বলব") ||
-      normalized.includes("নাম্বার") ||
-      normalized.includes("ইমেইল")
-    )
+    /^(thanks?|thank\s*you|thnx|ty|dhonyobad|dhonnobad|shukriya|ধন্যবাদ|শুকরিয়া|ok|okay|k|got\s*it|thik\s*ache|accha|acha|thik\s*ase)$/i.test(q) ||
+    /^(thanks?|thank\s*you|dhonyobad|dhonnobad)\s+(a\s*lot|so\s*much|vai|bhai|bro)?$/i.test(q)
   ) {
     if (isBengaliOrBanglish) {
-      return "Rashed-এর সাথে সরাসরি যোগাযোগ করতে নিচের WhatsApp বা Email বাটন ব্যবহার করতে পারেন, অথবা সরাসরি প্রজেক্ট ব্রিফ সাবমিট করতে পারেন:";
+      return "আপনাকে অনেক ধন্যবাদ ও স্বাগতম! 😊 Rashed-এর কাজ বা প্রজেক্ট নিয়ে আর কোনো কিছু জানতে চাইলে নির্দ্বিধায় বলতে পারেন।";
     }
-    return "You can reach Rashed Pervej directly via WhatsApp or Email, or submit a quick project brief below:";
+    return "You're very welcome! 😊 Feel free to ask if there's anything else you'd like to explore about Rashed's work or project collaboration.";
   }
 
-  // 3. Human Handoff / Talk to Rashed Request
-  if (
-    normalized.includes("talk to rashed") ||
-    normalized.includes("speak with rashed") ||
-    normalized.includes("connect with rashed") ||
-    normalized.includes("human handoff") ||
-    normalized.includes("rashed er sathe kotha") ||
-    normalized.includes("rashed er shathe") ||
-    normalized.includes("rashed er sathe")
-  ) {
-    if (isBengaliOrBanglish) {
-      return "অবশ্যই! আমি আপনাকে সরাসরি Rashed-এর সাথে কানেক্ট করে দিচ্ছি। আপনি ওনার সাথে নিচের WhatsApp বা Email বাটনে সরাসরি যোগাযোগ করতে পারেন, অথবা প্রজেক্টের ব্রিফ জমা দিতে পারেন:";
-    }
-    return "Absolutely! I can connect you directly with Rashed. You can message him instantly on WhatsApp, send an Email, or submit a quick project brief below:";
-  }
-
-  // 4. View Portfolio / Work Showcase / Link Dao
-  if (
-    q === "view portfolio" ||
-    q === "show portfolio" ||
-    q === "link dao" ||
-    q === "link" ||
-    normalized.includes("link dao") ||
-    normalized.includes("link den") ||
-    normalized.includes("portfolio link") ||
-    normalized.includes("portfolio dekhan") ||
-    normalized.includes("kaj dekhte chai")
-  ) {
-    if (isBengaliOrBanglish) {
-      return "নিচের লিংকে ঢুকে আপনি আপডেটেড প্রজেক্টস দেখতে পাবেন। আপনার প্রজেক্টের বিষয়ে আলোচনা করতে নিচের ব্রিফ বা WhatsApp বাটন ব্যবহার করতে পারেন:";
-    }
-    return "You can view Rashed's updated projects and case studies using the link below. Feel free to submit a quick brief or message via WhatsApp to discuss your project:";
-  }
-
-  // 5. Pricing / Ballpark Estimate Policy (Do NOT invent dollar figures unless admin guides)
-  if (
-    (normalized.includes("price") || normalized.includes("cost") || normalized.includes("dam koto") || normalized.includes("khoroch") || normalized.includes("rates") || normalized.includes("quote") || normalized.includes("budget") || normalized.includes("pricing") || normalized.includes("koto taka") || normalized.includes("charge")) &&
-    q.length < 65
-  ) {
-    const customPrice = (data as any)?.customPriceGuidelines || (data as any)?.aiRouterSettings?.customPriceGuidelines;
-    if (customPrice && typeof customPrice === "string" && customPrice.trim()) {
-      return customPrice.trim();
-    }
-    if (isBengaliOrBanglish) {
-      return "Rashed-এর প্রজেক্ট প্রাইসিং সম্পূর্ণ কাস্টমাইজড—কাজের পরিধি (Scope), ডিজাইনের জটিলতা এবং ডেলিভারি টাইমলাইনের ওপর নির্ভর করে (কোনো ফিক্সড বা রিজিড রেট নেই)। আপনার প্রজেক্টের সঠিক কোটেশন পেতে বা আলোচনার জন্য নিচের বাটনে সংক্ষিপ্ত ব্রিফ জমা দিন অথবা WhatsApp-এ মেসেজ দিয়ে রিকোয়েস্ট কল ব্যাক করতে পারেন:";
-    }
-    return "Rashed does not quote rigid, fixed rates upfront. Every project's investment is custom-tailored to its specific scope, deliverables, and timeline. To receive an exact tailored quotation or request a project discussion/call back, please share a quick brief below or connect directly on WhatsApp:";
-  }
-
-  // 5b. Permanent / Full-Time Job Offers & Recruitment Inquiries
-  const isJobInquiry =
-    normalized.includes("full-time") ||
-    normalized.includes("full time") ||
-    normalized.includes("permanent") ||
-    normalized.includes("chakri") ||
-    normalized.includes("chakor") ||
-    normalized.includes("চাকরি") ||
-    normalized.includes("নিয়োগ") ||
-    normalized.includes("recruitment") ||
-    normalized.includes("join our team") ||
-    normalized.includes("in-house");
-
-  if (isJobInquiry && q.length < 90) {
-    if (isBengaliOrBanglish) {
-      return "ফুল-টাইম বা ক্যারিয়ারের সুযোগের প্রস্তাবের জন্য ধন্যবাদ! Rashed মূলত সিলেক্টেড ব্র্যান্ড বা এজেন্সির সাথে সিনিয়র ভিজ্যুয়ালাইজার বা ডিজাইন লিড হিসেবে কাজ করতে আগ্রহী। আপনার কোম্পানি ও ভূমিকা নিয়ে বিস্তারিত আলোচনার জন্য নিচের WhatsApp বা Email বাটন দিয়ে সরাসরি যোগাযোগ করতে পারেন:";
-    }
-    return "Thank you for the opportunity! Rashed is open to discussing high-impact Senior Visualizer, Art Director, or Design Lead roles with forward-thinking brands and creative teams. To discuss the role and your company vision, please connect directly with Rashed via WhatsApp or Email below:";
-  }
-
-  // 6. Direct Grounded Match with verified FAQ Database
+  // 2. Direct Grounded Match with verified FAQ Database (Only strict exact FAQ questions)
   if (Array.isArray(data?.faqs) && data.faqs.length > 0) {
     const cleanQ = q.replace(/[^a-z0-9]/g, " ").trim();
     for (const faq of data.faqs) {
       if (!faq?.question || !faq?.answer) continue;
       const faqQ = faq.question.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
-      if (
-        faqQ === cleanQ ||
-        (cleanQ.length > 12 && faqQ.includes(cleanQ)) ||
-        (faqQ.length > 12 && cleanQ.includes(faqQ))
-      ) {
+      // Strict exact match only: if user is asking conversational variations, let the dynamic AI model handle with full persona
+      if (faqQ.length > 5 && faqQ === cleanQ) {
         return faq.answer.trim();
       }
     }
@@ -786,7 +693,8 @@ export default async function handler(req: any, res: any) {
 
     // 2. Fetch fresh structured and markdown knowledge
     const structuredData = await getStructuredPortfolioData();
-    const isCompact = (structuredData?.aiRouterSettings?.contextMode ?? "compact") === "compact";
+    // Default to rich "full" knowledge so AI has full context of experience, projects and services
+    const isCompact = (structuredData?.aiRouterSettings?.contextMode ?? "full") === "compact";
     const knowledgeBase = await getPortfolioKnowledge(isCompact ? "compact" : "full");
 
     // 3. Grounded Portfolio Direct Matcher (Immediate, 100% accurate, zero latency, warm human tone)
@@ -795,40 +703,13 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ text: directAnswer, provider: "FAQ" });
     }
 
-    // 4. Dynamic AI Generation with Precious-Style Multi-Provider Vault Router & Failover
-    let candidates: VaultCandidate[] = [];
-
-    if (Array.isArray(structuredData?.aiVault) && structuredData.aiVault.length > 0) {
-      candidates = structuredData.aiVault
-        .filter((v: any) => v && v.apiKey && v.isActive !== false)
-        .sort((a: any, b: any) => (a.priority || 99) - (b.priority || 99))
-        .map((v: any) => ({
-          id: v.id,
-          provider: v.provider || (v.apiKey.startsWith("gsk_") ? "groq" : "gemini"),
-          label: v.label,
-          apiKey: v.apiKey,
-          model: v.model,
-          priority: v.priority || 99,
-        }));
-    }
-
-    // If Vault is empty or has no active keys, fallback to legacy keys
-    if (candidates.length === 0) {
-      const fallbackKeys = getAvailableApiKeys(structuredData?.aiApiKey);
-      candidates = fallbackKeys.map((k, idx) => ({
-        id: `legacy_${idx}`,
-        provider: (k.startsWith("gsk_") ? "groq" : "gemini") as any,
-        label: k.startsWith("gsk_") ? "Groq (Llama 3.3 70B Active)" : "Google Gemini Flash",
-        apiKey: k,
-        model: k.startsWith("gsk_") ? "llama-3.3-70b-versatile" : "gemini-2.0-flash",
-        priority: idx + 1,
-      }));
-    }
+    // 4. Dynamic AI Generation with Unified Central Key Resolver
+    const candidates: ResolvedKeyCandidate[] = await resolveActiveProviderChain();
 
     if (candidates.length === 0) {
-      console.warn("[AI Chat Warning] 0 active AI keys found in Vault/Database/Env. Check Vercel Environment Variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or GROQ_API_KEY).");
+      console.warn("[AI Chat Warning] 0 active AI keys resolved by Central Key Resolver. Check Vault or Vercel Environment variables (GROQ_API_KEY).");
     } else {
-      console.log(`[AI Chat] Router loaded ${candidates.length} candidate(s): ${candidates.map(c => `${c.provider}(${c.model})`).join(", ")}`);
+      console.log(`[AI Chat] Central Resolver loaded ${candidates.length} candidate(s): ${candidates.map(c => `${c.label}[${c.source}]: ${c.provider}(${c.model})`).join(", ")}`);
     }
 
     // Precious Cooldown check: skip keys on cooldown unless all are down
@@ -847,10 +728,12 @@ export default async function handler(req: any, res: any) {
     }
 
     // Prioritize explicitly selected model from Hall of Keys router dropdown
-    const selectedModel = req.body?.selectedModel || structuredData?.aiRouterSettings?.selectedModel || "auto";
+    const rawSelectedModel = req.body?.selectedModel || structuredData?.aiRouterSettings?.selectedModel || "auto";
+    const selectedModel = rawSelectedModel.replace(/gpt-oss-\d+b|qwen3\.8-\d+b|openai\/gpt-oss/gi, "llama-3.3-70b-versatile");
     if (selectedModel && selectedModel !== "auto") {
       const lowerSel = selectedModel.toLowerCase().trim();
-      const [provPart, modPart] = lowerSel.includes(":") ? lowerSel.split(":") : ["", lowerSel];
+      const [provPart, rawModPart] = lowerSel.includes(":") ? lowerSel.split(":") : ["", lowerSel];
+      const modPart = provPart === "groq" || !provPart ? sanitizeGroqModelName(rawModPart) : rawModPart;
       
       const matchIdx = viableCandidates.findIndex((c) => {
         const fullMatch = `${c.provider}:${c.model}`.toLowerCase();
@@ -879,7 +762,12 @@ export default async function handler(req: any, res: any) {
     }
 
     const contents = formatGeminiContents(history, cleanMessage);
-    const systemInstruction = buildSystemInstruction(knowledgeBase, isCompact, structuredData?.chatTrainingRules);
+    const systemInstruction = buildSystemInstruction(
+      knowledgeBase,
+      isCompact,
+      structuredData?.chatTrainingRules,
+      structuredData?.chatbotSettings
+    );
 
     let attemptIndex = 0;
     const failedCandidates: string[] = [];
@@ -920,6 +808,7 @@ export default async function handler(req: any, res: any) {
             const latency = Date.now() - chatStartTime;
             const hasFailover = failedCandidates.length > 0;
             const failoverReason = hasFailover ? failedCandidates.join(", ") : undefined;
+            const trackingProvider = candidate.source === "env" ? "groq-env" : "groq";
 
             recordAuditLog({
               action: "chat_request",
@@ -927,6 +816,8 @@ export default async function handler(req: any, res: any) {
               resourceId: `sess_${Date.now()}`,
               metadata: {
                 provider: "groq",
+                keySource: candidate.source,
+                keyLabel: candidate.label,
                 model: modelToUse,
                 tokens: groqRes.totalTokens || 3500,
                 latencyMs: latency,
@@ -935,14 +826,11 @@ export default async function handler(req: any, res: any) {
                 failoverFrom: failoverReason,
               },
             });
-            recordTokenUsage("groq", groqRes.totalTokens || 3500);
+            recordTokenUsage(trackingProvider, groqRes.totalTokens || 3500);
             return res.status(200).json({
               text: groqRes.text.trim(),
               tokenUsage: groqRes.totalTokens,
               provider: "groq",
-              model: modelToUse,
-              attempts: attemptIndex,
-              failoverFrom: failoverReason,
             });
           }
         } else if (candidate.provider === "openrouter" || candidate.apiKey.startsWith("sk-or-")) {
@@ -973,6 +861,8 @@ export default async function handler(req: any, res: any) {
               resourceId: `sess_${Date.now()}`,
               metadata: {
                 provider: "openrouter",
+                keySource: candidate.source,
+                keyLabel: candidate.label,
                 model: modelToUse,
                 tokens: orRes.totalTokens || 2200,
                 latencyMs: latency,
@@ -986,9 +876,6 @@ export default async function handler(req: any, res: any) {
               text: orRes.text.trim(),
               tokenUsage: orRes.totalTokens,
               provider: "openrouter",
-              model: modelToUse,
-              attempts: attemptIndex,
-              failoverFrom: failoverReason,
             });
           }
         } else if (candidate.provider === "openai" || candidate.apiKey.startsWith("sk-")) {
@@ -1015,6 +902,8 @@ export default async function handler(req: any, res: any) {
               resourceId: `sess_${Date.now()}`,
               metadata: {
                 provider: "openai",
+                keySource: candidate.source,
+                keyLabel: candidate.label,
                 model: modelToUse,
                 tokens: oaiRes.totalTokens || 2400,
                 latencyMs: latency,
@@ -1028,13 +917,13 @@ export default async function handler(req: any, res: any) {
               text: oaiRes.text.trim(),
               tokenUsage: oaiRes.totalTokens,
               provider: "openai",
-              model: modelToUse,
-              attempts: attemptIndex,
-              failoverFrom: failoverReason,
             });
           }
-        } else {
-          // Google Gemini Provider
+        } else if (candidate.provider === "gemini" || candidate.provider === "google-gemini") {
+          if (!candidate.apiKey.startsWith("AIzaSy")) {
+            throw new Error("Invalid Gemini API key format (must start with AIzaSy)");
+          }
+          // Google Gemini Provider (only when explicitly configured with genuine key)
           const { primary: modelToUse, fallback: fallbackModel } = await resolveDynamicGeminiModel(candidate.apiKey, candidate.model);
           const ai = new GoogleGenAI({
             apiKey: candidate.apiKey,
@@ -1081,6 +970,8 @@ export default async function handler(req: any, res: any) {
               resourceId: `sess_${Date.now()}`,
               metadata: {
                 provider: "gemini",
+                keySource: candidate.source,
+                keyLabel: candidate.label,
                 model: modelToUse,
                 tokens: totalTokens,
                 latencyMs: latency,
@@ -1094,61 +985,69 @@ export default async function handler(req: any, res: any) {
               text: response.text.trim(),
               tokenUsage: totalTokens,
               provider: "gemini",
-              model: modelToUse,
-              attempts: attemptIndex,
-              failoverFrom: failoverReason,
             });
           }
+        } else {
+          throw new Error(`Provider '${candidate.provider}' is not supported or not configured`);
         }
       } catch (providerError: any) {
-        failedCandidates.push(candidate.provider || candidate.label || "unknown");
+        const errorText = providerError?.message || String(providerError);
+        const candidateName = `${candidate.label || candidate.provider} [${candidate.source}] (${candidate.model || "default"})`;
+        failedCandidates.push(`${candidateName}: ${errorText.slice(0, 70)}`);
         providerCooldowns.set(keyId, Date.now() + cooldownDuration);
-        console.warn(`[Vault Router: Key ${candidate.label || keyId.slice(0, 7)} failed. Cooldown set for ${cooldownDuration / 1000}s. Trying next provider]:`, providerError?.message || providerError);
+
+        // Point 10: Structured Failure Log in ledger
+        recordAuditLog({
+          action: "provider_call_failed",
+          resourceType: "provider",
+          resourceId: candidate.provider,
+          metadata: {
+            keyLabel: candidate.label,
+            keySource: candidate.source,
+            provider: candidate.provider,
+            model: candidate.model,
+            error: errorText,
+            attempt: attemptIndex,
+            totalViable: viableCandidates.length,
+          },
+        });
+
+        console.warn(`[Vault Router: Candidate "${candidate.label}" (${candidate.source}) failed. Cooldown set for ${cooldownDuration / 1000}s. Trying next candidate]:`, errorText);
       }
     }
 
-    // 5. Default natural portfolio introduction (if all AI providers failed)
-    if (viableCandidates.length > 0 && failedCandidates.length >= viableCandidates.length) {
-      recordAuditLog({
-        action: "chat_request",
-        resourceType: "chat",
-        resourceId: `sess_${Date.now()}`,
-        metadata: {
-          provider: "system",
-          model: "fallback",
-          tokens: 45,
-          latencyMs: Date.now() - chatStartTime,
-          question: cleanMessage.slice(0, 90),
-          error: "All configured AI providers were unreachable or rate-limited",
-          attempts: attemptIndex,
-          failoverFrom: failedCandidates.join(", "),
-        },
-      });
-    }
+    // 5. Tier-2 Seamless Fallback when all AI providers are exhausted
+    // Records diagnostic audit log on the server, but returns a warm, natural portfolio-grounded answer to the visitor
+    recordAuditLog({
+      action: "all_providers_failed",
+      resourceType: "chat",
+      resourceId: `sess_${Date.now()}`,
+      metadata: {
+        provider: "system",
+        model: "failover_exhausted",
+        latencyMs: Date.now() - chatStartTime,
+        question: cleanMessage.slice(0, 90),
+        error: "All configured AI providers were unreachable; seamless Tier-2 DB fallback engaged",
+        attempts: attemptIndex,
+        failoverChain: failedCandidates,
+      },
+    });
 
-    const isBengaliOrBanglish =
-      /[\u0980-\u09FF]/.test(cleanMessage) ||
-      /\b(koren|kore|kori|korte|koro|korbo|koto|kobe|koi|chai|chay|ache|achhe|ase|lagbe|lagve|hobe|jani|bolen|amake|amar|apnar|apni|tumi|tomar|ki|keno|kemon|kothay|shuru|bhalo|darun|dhaka|jashore|dam|khoroch|somoy|duita|ekta|duti|ta|tate|korsen|kortesi|korchen)\b/i.test(
-        cleanMessage
-      );
-
-    const defaultResponse = isBengaliOrBanglish
-      ? `হ্যালো! Rashed Pervej-এর ডিজাইন পোর্টফোলিওতে স্বাগতম। Brand Identity, Packaging Design বা Motion Graphics—কোন বিষয়ে জানতে চাচ্ছেন?`
-      : `Hello! Welcome to Rashed Pervej's creative portfolio. Are you looking into Brand Identity, Packaging Design, or Motion Graphics?`;
-
+    // Execute Tier-2 Grounded Fuzzy Matcher (typo-tolerant, human conversational tone)
+    const fallbackAnswer = resolveFuzzyPortfolioFallback(cleanMessage, history, structuredData);
     return res.status(200).json({
-      text: defaultResponse,
-      provider: "System",
-      tokenUsage: 45,
-      attempts: attemptIndex,
-      failoverFrom: failedCandidates.length > 0 ? failedCandidates.join(", ") : undefined,
+      text: fallbackAnswer.text,
+      provider: "Portfolio Assistant",
+      fallbackMatched: fallbackAnswer.matchedSource,
+      confidence: fallbackAnswer.confidence,
     });
   } catch (error: any) {
-    console.error("[AI Chat API Error]:", error?.message || error);
+    // 6. Tier-3 Strict Single Emergency Fallback (AI + DB both fail)
+    console.error("[Chat Critical Emergency Fallback Triggered]:", error?.message || error);
     return res.status(200).json({
-      text: "Hi! Rashed Pervej is a Senior Visualizer specializing in **Brand Identity**, **Packaging**, and **Motion Graphics**. Reach him directly at **rashedpervej2011@gmail.com** or WhatsApp at **+8801932623969**.",
-      provider: "System",
-      tokenUsage: 35,
+      text: "Rashed Pervej is a Senior Visualizer specializing in Brand Identity, Packaging, and Motion Graphics. For direct inquiries, feel free to reach out via Email (rashedpervej2011@gmail.com) or WhatsApp (+8801932623969).",
+      provider: "Emergency Fallback",
+      tokenUsage: 0,
     });
   }
 }
