@@ -61,6 +61,7 @@ export interface StructuredPortfolioData {
   chatTrainingRules?: any[];
   customPriceGuidelines?: string;
   masterUnifiedKey?: string;
+  chatbotSettings?: any;
 }
 
 let cachedStructuredData: StructuredPortfolioData | null = null;
@@ -93,6 +94,7 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
   let dbChatTrainingRules: any[] | undefined = undefined;
   let dbCustomPriceGuidelines: string | undefined = undefined;
   let dbMasterUnifiedKey: string | undefined = undefined;
+  let dbChatbotSettings: any | undefined = undefined;
 
   // 1. Try querying Supabase
   if (supabaseUrl && supabaseKey && supabaseUrl !== "https://your-supabase-project.supabase.co") {
@@ -137,13 +139,23 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
         if (found && typeof found.value === "string" && found.value.trim()) {
           dbAiApiKey = found.value.trim();
         }
-        // Check encrypted_ai_vault FIRST, then fallback to legacy aiVault
-        const encVaultRow = settingsRes.find((s: any) => s.key === "encrypted_ai_vault" || s.key === "aiVault");
+        // Check non-empty encrypted_ai_vault, then non-empty aiVault
+        const encVaultRow = settingsRes.find((s: any) => s.key === "encrypted_ai_vault" && s.value && s.value.trim()) ||
+                            settingsRes.find((s: any) => s.key === "aiVault" && s.value && s.value.trim());
         if (encVaultRow && encVaultRow.value) {
           try {
             const decrypted = await decryptVaultData(encVaultRow.value);
             if (Array.isArray(decrypted) && decrypted.length > 0) {
-              dbAiVault = decrypted;
+              // Strictly sanitize out unconfigured dead Gemini keys lingering from legacy rows
+              dbAiVault = decrypted.filter((k: any) => {
+                const prov = (k?.provider || "").toLowerCase();
+                const key = (k?.apiKey || "").trim();
+                const label = (k?.label || "").toLowerCase();
+                if (prov === "gemini" || prov === "google-gemini" || label.includes("gemini") || key.startsWith("AQ.")) {
+                  if (!key.startsWith("AIzaSy")) return false;
+                }
+                return true;
+              });
             }
           } catch (e) {
             console.warn("[chatKnowledge] Could not decrypt vault from DB:", e);
@@ -169,6 +181,12 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
         if (masterKeyRow && masterKeyRow.value) {
           dbMasterUnifiedKey = typeof masterKeyRow.value === "string" ? masterKeyRow.value.trim() : String(masterKeyRow.value).trim();
         }
+        const chatbotRow = settingsRes.find((s: any) => s.key === "chatbotSettings");
+        if (chatbotRow && chatbotRow.value) {
+          try {
+            dbChatbotSettings = typeof chatbotRow.value === "string" ? JSON.parse(chatbotRow.value) : chatbotRow.value;
+          } catch (e) {}
+        }
       }
     } catch (e: any) {
       console.warn("[chatKnowledge] Supabase query timed out or failed, falling back to snapshot:", e?.message);
@@ -192,14 +210,21 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
       }
       if (parsed) {
         const sSettings = parsed.siteSettings || parsed.site_settings || {};
-        if (sSettings.aiApiKey || sSettings.geminiApiKey) {
-          dbAiApiKey = sSettings.aiApiKey || sSettings.geminiApiKey;
+        if (sSettings.aiApiKey) {
+          dbAiApiKey = sSettings.aiApiKey;
         }
         const rawSnapVault = sSettings.encrypted_ai_vault || sSettings.aiVault;
         if (rawSnapVault) {
           const decrypted = await decryptVaultData(rawSnapVault);
           if (Array.isArray(decrypted) && decrypted.length > 0) {
-            dbAiVault = decrypted;
+            dbAiVault = decrypted.filter((k: any) => {
+              const prov = (k?.provider || "").toLowerCase();
+              const key = (k?.apiKey || "").trim();
+              if (prov === "gemini" || prov === "google-gemini" || key.startsWith("AQ.")) {
+                if (!key.startsWith("AIzaSy")) return false;
+              }
+              return true;
+            });
           }
         }
         if (sSettings.aiRouterSettings && !dbAiRouterSettings) {
@@ -212,7 +237,6 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
   // 1c. Runtime environment fallback if no vault is configured in DB/snapshot
   if ((!dbAiVault || (Array.isArray(dbAiVault) && dbAiVault.length === 0)) && !dbAiApiKey) {
     const envGroq = process.env.GROQ_API_KEY;
-    const envGemini = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
     const envVault: any[] = [];
 
     if (envGroq && typeof envGroq === "string" && envGroq.trim() && !envGroq.startsWith("MY_")) {
@@ -227,35 +251,12 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
       });
     }
 
-    if (envGemini && typeof envGemini === "string" && envGemini.trim() && !envGemini.startsWith("MY_")) {
-      envVault.push({
-        id: "vault_gemini_env",
-        provider: "gemini",
-        label: "Google Gemini Flash (Environment)",
-        apiKey: envGemini.trim(),
-        model: "gemini-2.0-flash",
-        priority: 2,
-        isActive: true,
-      });
-      dbAiApiKey = envGemini.trim();
-    }
-
     if (envVault.length > 0) {
       dbAiVault = envVault;
     }
   }
 
-  // 1d. Embedded AES-256-GCM encrypted vault baseline (Zero-Key runtime fallback)
-  if ((!dbAiVault || (Array.isArray(dbAiVault) && dbAiVault.length === 0)) && !dbAiApiKey) {
-    try {
-      const DEFAULT_ENCRYPTED_VAULT =
-        "enc:v1:8ODfwvydgEDDo39w:Z9H2P1RrrgZNteaPU7brGBvtF2dIKVnzG3UbygWaQBpyepiwwzaN/Ce6JgyaGOg/fSnrvhbTk6mDncxMQ6OawdKxBG/DccTDu1QAq3xlbxGJOqYQ0zX8/mmQO9/WRtVLaXLc7VnshXzWqjBndoh4wMEbO4d31F4F7gIcXvBLf0w2uB91AvNtYmaBIXQ9uw1Df87ttFDEGHQsNa3tpq0ljPpT9zxTYq0YZom4CNF9Lw9Z0tn79KGKsTOiOKOIyckZOuMY/0IqOH5rlQDfOa8kVwQbvJpZX9/UdD+F2DRi7JFrbvjCixVbJfP1zV05uVkgCcUJesyd78PatUEMkc5L2oL7IFFqVam9CI5xEw1tVpPtTA==";
-      const decrypted = await decryptVaultData(DEFAULT_ENCRYPTED_VAULT);
-      if (Array.isArray(decrypted) && decrypted.length > 0) {
-        dbAiVault = decrypted;
-      }
-    } catch (e) {}
-  }
+  // 1d. If no vault keys found, system will log appropriate diagnostic warning in chat handler
 
   // 2. Fallback to local snapshot.json if sections not loaded from Supabase
   if (Object.keys(sectionsMap).length === 0) {
@@ -354,14 +355,17 @@ export async function getStructuredPortfolioData(): Promise<StructuredPortfolioD
     chatTrainingRules: dbChatTrainingRules,
     customPriceGuidelines: dbCustomPriceGuidelines,
     masterUnifiedKey: dbMasterUnifiedKey || process.env.MASTER_UNIFIED_KEY || process.env.PRECIOUS_MASTER_KEY,
+    chatbotSettings: dbChatbotSettings,
   };
 
   cachedStructuredData = data;
   return data;
 }
 
+import { getAutonomousPortfolioSummary } from "./portfolioSummaryEngine.js";
+
 /**
- * Loads dynamic knowledge base as formatted Markdown for Gemini System Instruction
+ * Loads dynamic knowledge base as formatted Markdown for Gemini/AI System Instruction
  * Supports "compact" (token-optimized ~250 words) and "full" (all verbose sections)
  */
 export async function getPortfolioKnowledge(mode: "compact" | "full" = "compact"): Promise<string> {
@@ -376,33 +380,12 @@ export async function getPortfolioKnowledge(mode: "compact" | "full" = "compact"
   const d = await getStructuredPortfolioData();
 
   if (mode === "compact") {
-    const services = Array.isArray(d.services)
-      ? d.services.map((s: any) => cleanText(s.title || s.name)).filter(Boolean).join(", ")
-      : "Brand Identity, Packaging Design, Motion Graphics";
-    const brands = Array.isArray(d.brands)
-      ? d.brands.map((b: any) => cleanText(b.brandName || b.name)).filter(Boolean).slice(0, 8).join(", ")
-      : "Go Nature BD, Chaldal Ltd., Sheba Platform Ltd.";
-    const tools = d.skills?.creativeTools
-      ? (Array.isArray(d.skills.creativeTools) ? d.skills.creativeTools.map((t: any) => cleanText(t.name || t)).join(", ") : cleanText(d.skills.creativeTools))
-      : "Photoshop, Illustrator, After Effects, Canva, CapCut";
-    const projects = Array.isArray(d.projects)
-      ? d.projects.slice(0, 6).map((p: any) => `${cleanText(p.title)} (${cleanText(p.category || "")})`).join("; ")
-      : "Brand Identity & Packaging Designs";
-
+    const summary = getAutonomousPortfolioSummary(d);
     const faqSummary = Array.isArray(d.faqs) && d.faqs.length > 0
-      ? "\n- **Verified FAQs & Knowledge**:\n" + d.faqs.slice(0, 12).map((f: any) => `  * Q: ${f.question} -> A: ${f.answer}`).join("\n")
+      ? "\n\n### VERIFIED FAQS & POLICIES\n" + d.faqs.slice(0, 15).map((f: any) => `- Q: ${f.question} -> A: ${f.answer}`).join("\n")
       : "";
 
-    const compactText = `### RASHED PERVEJ - PORTFOLIO KNOWLEDGE SUMMARY
-- **Identity**: ${d.name} (${d.role} | ${d.headline}). Over ${d.experienceYears} years experience. Location: ${d.location}. Status: ${d.availability}.
-- **Bio**: ${d.aboutSummary || d.heroBio}
-- **Services**: ${services}
-- **Selected Brands**: ${brands}
-- **Featured Projects**: ${projects}
-- **Toolkit & Software**: ${tools}
-- **Pricing Policy**: Custom project-based quote (no rigid hourly fee). Reach out with project brief.
-- **Direct Contacts**: WhatsApp: ${d.phone} | Email: ${d.email} | Portfolio: https://${d.behance.replace(/^https?:\/\//, "")} | LinkedIn: https://${d.linkedin.replace(/^https?:\/\//, "")}${faqSummary}`;
-
+    const compactText = `${summary.compactFactualText}${faqSummary}`;
     cachedCompactKnowledge = compactText;
     lastKnowledgeFetch = now;
     return compactText;
