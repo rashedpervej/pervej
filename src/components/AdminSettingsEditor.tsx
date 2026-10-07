@@ -299,7 +299,13 @@ export default function AdminSettingsEditor({ isDemo = false, initialTab = "gene
     setSiteSettings((prev) => {
       const next = { ...prev, ...updatedSettings };
       try {
-        localStorage.setItem("portfolio_site_settings", JSON.stringify(next));
+        const safeSettings = {
+          ...next,
+          aiVault: [],
+          masterUnifiedKey: "",
+          encrypted_ai_vault: "",
+        };
+        localStorage.setItem("portfolio_site_settings", JSON.stringify(safeSettings));
       } catch (e) {}
       return next;
     });

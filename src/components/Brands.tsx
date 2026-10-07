@@ -78,8 +78,10 @@ export default function Brands() {
           SELECTED BRANDS & COLLABORATORS
         </p>
 
-        {/* Dynamic Horizontal Ticker Marquee - Edge-to-edge on mobile, contained on desktop */}
-        <div className="relative edge-to-edge-slider overflow-hidden py-2 sm:py-3 group/marquee">
+        {/* Dynamic Horizontal Ticker Marquee with Organic Edge Fade (opacity 0% -> 100% -> 0%) */}
+        <div 
+          className="relative edge-to-edge-slider overflow-hidden py-2 sm:py-3 group/marquee [mask-image:linear-gradient(to_right,transparent_0%,black_20px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_20px,black_calc(100%-20px),transparent_100%)] sm:[mask-image:linear-gradient(to_right,transparent_0%,black_50px,black_calc(100%-50px),transparent_100%)] sm:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_50px,black_calc(100%-50px),transparent_100%)]"
+        >
           {/* Unified Moving Track Container: exactly translates by -50% for zero-jitter, seamless continuity */}
           <div
             className="flex w-max items-center animate-marquee-seamless"

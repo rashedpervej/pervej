@@ -57,12 +57,31 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             <p className="text-sm text-zinc-400 leading-relaxed">
               The page encountered an unexpected issue while loading. Please tap reload to refresh.
             </p>
-            <button
-              onClick={this.handleReload}
-              className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              Reload Page
-            </button>
+            {this.state.error?.message && (
+              <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/20 text-red-300 text-xs font-mono text-left overflow-x-auto max-h-32">
+                {this.state.error.message}
+              </div>
+            )}
+            <div className="flex gap-3 justify-center pt-2">
+              <button
+                onClick={this.handleReload}
+                className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Reload Page
+              </button>
+              <button
+                onClick={() => {
+                  try {
+                    localStorage.removeItem("portfolio_active_conv_id");
+                    localStorage.removeItem("portfolio_chat_messages");
+                  } catch (_) {}
+                  this.setState({ hasError: false, error: null });
+                }}
+                className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Reset & Try Again
+              </button>
+            </div>
           </div>
         </div>
       );
