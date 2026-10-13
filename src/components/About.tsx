@@ -245,6 +245,10 @@ export default function About() {
                     <span className={`font-sans text-xs ${isLight ? "text-zinc-700" : "text-zinc-300"}`}>
                       English — Professional proficiency for global teams
                     </span>
+
+                    <span className={`font-sans text-xs ${isLight ? "text-zinc-700" : "text-zinc-300"}`}>
+                      Benglai — Native Fluance
+                    </span>
                   </div>
                 </div>
               </div>
