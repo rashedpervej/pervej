@@ -245,11 +245,16 @@ export default function About() {
                     <span className={`font-sans text-xs ${isLight ? "text-zinc-700" : "text-zinc-300"}`}>
                       English — Professional proficiency for global teams
                     </span>
+                  </div>
 
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className={`w-4 h-4 ${isLight ? "text-purple-600" : "text-purple-400"}`} />
                     <span className={`font-sans text-xs ${isLight ? "text-zinc-700" : "text-zinc-300"}`}>
-                      Benglai — Native Fluance
+                      Bengali — Native Fluance
                     </span>
                   </div>
+                  
+                  
                 </div>
               </div>
             </motion.div>
