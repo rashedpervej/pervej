@@ -113,6 +113,16 @@ export interface MessageAction {
   primary?: boolean;
 }
 
+export interface BriefSummaryData {
+  name: string;
+  emailOrPhone: string;
+  projectType: string;
+  budget: string;
+  timeline: string;
+  notes?: string;
+  submittedAt?: string;
+}
+
 export interface Message {
   id: string;
   role: "user" | "model";
@@ -121,8 +131,43 @@ export interface Message {
   actions?: MessageAction[];
   showLeadForm?: boolean;
   leadSubmitted?: boolean;
+  briefSummary?: BriefSummaryData;
   feedback?: "helpful" | "unhelpful" | null;
   feedbackReason?: string;
+}
+
+/**
+ * Builds a dynamic, structured WhatsApp message matching the client brief template
+ */
+export function buildBriefWhatsAppMessage(data: {
+  name?: string;
+  emailOrPhone?: string;
+  projectType?: string;
+  budget?: string;
+  timeline?: string;
+  notes?: string;
+}): string {
+  const category = data.projectType || "Brand Identity";
+  const budget = data.budget || "Flexible";
+  const timeline = data.timeline || "Standard (2-4 wks)";
+  const scope = data.notes && data.notes.trim() ? data.notes.trim() : "Standard scope / Discussion needed";
+  const clientName = data.name || "Client";
+  const contact = data.emailOrPhone || "Provided in brief";
+
+  return `Hi Rashed,
+I’d like to discuss the project with you.
+
+🎯 ${category}
+💰 Estimated ${budget}
+⏱ Time ${timeline}
+
+Project Scope:
+${scope}
+
+👤 ${clientName}
+📱 ${contact}
+—
+Portfolio Project Brief`;
 }
 
 /**
@@ -265,6 +310,7 @@ function FullWidthProjectBriefSheet({
   onClose,
   onSubmitBrief,
   briefSettings,
+  verifiedPhone,
 }: {
   isLight: boolean;
   onClose: () => void;
@@ -277,6 +323,7 @@ function FullWidthProjectBriefSheet({
     notes: string;
   }) => Promise<void>;
   briefSettings?: any;
+  verifiedPhone?: string;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
   const storedLead = getStoredUserLead();
@@ -464,19 +511,33 @@ function FullWidthProjectBriefSheet({
             </div>
 
             <div className="pt-2 flex flex-col gap-2 max-w-xs mx-auto">
-              <a
-                href="https://wa.me/8801932623969?text=Hi%20Rashed%2C%20I%20just%20submitted%20a%20project%20brief%20through%20your%20portfolio!"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 h-12 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
-              >
-                <Phone className="w-4 h-4" />
-                {cfg.whatsappButtonText || "Chat Now on WhatsApp"}
-                <ExternalLink className="w-3 h-3 opacity-80" />
-              </a>
+              {(() => {
+                const cleanPhone = (verifiedPhone || "+8801932623969").replace(/\D/g, "");
+                const dynamicWaText = buildBriefWhatsAppMessage({
+                  name: name.trim(),
+                  emailOrPhone: emailOrPhone.trim(),
+                  projectType,
+                  budget,
+                  timeline,
+                  notes: notes.trim(),
+                });
+                const dynamicWaUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(dynamicWaText)}`;
+                return (
+                  <a
+                    href={dynamicWaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 h-12 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <Phone className="w-4 h-4" />
+                    {cfg.whatsappButtonText || "Chat Now on WhatsApp"}
+                    <ExternalLink className="w-3 h-3 opacity-80" />
+                  </a>
+                );
+              })()}
 
-              <button type="button" onClick={onClose} className={`w-full ${ghostBtn}`}>
-                Return to Chat
+              <button type="button" onClick={onClose} className={`w-full ${ghostBtn} gap-2`}>
+                View Brief in Chat ➔
               </button>
             </div>
           </div>
@@ -2478,7 +2539,8 @@ export default function AIChatBot() {
         body: JSON.stringify({
           message: cleanText,
           history: historyToSend,
-          selectedModel: siteSettings?.aiRouterSettings?.selectedModel
+          selectedModel: siteSettings?.aiRouterSettings?.selectedModel,
+          contextMode: siteSettings?.aiRouterSettings?.contextMode
         })
       });
 
@@ -2489,7 +2551,14 @@ export default function AIChatBot() {
       }
 
       const data = await res.json();
-      const responseText = data.text || "I'm sorry, I encountered an issue processing that request. Please try again.";
+      let responseText = data.text || "I'm sorry, I encountered an issue processing that request. Please try again.";
+
+      // Frontend safety filter: Ensure dummy placeholder numbers like +880123456789 are replaced with real phone
+      const realPhone = portfolioData?.personalInfo?.phone || "+8801932623969";
+      responseText = responseText
+        .replace(/\+?880\s*123\s*456\s*789\d*/gi, realPhone)
+        .replace(/\+?880\s*123456789\d*/gi, realPhone)
+        .replace(/\b0?123456789\b/gi, realPhone);
 
       // Human Conversational Micro-Pacing: Brief smoothing to prevent layout flashes without artificial sluggishness
       const elapsed = Date.now() - startTime;
@@ -2603,7 +2672,7 @@ export default function AIChatBot() {
         logInteraction({
           question: cleanText,
           answer: faqReply,
-          source: "FAQ (Client Fallback)",
+          source: "FAQ (Failover from Client Exception)",
           responseTimeMs: Date.now() - startTime,
           tokenUsage: null
         });
@@ -2650,7 +2719,7 @@ export default function AIChatBot() {
       logInteraction({
         question: cleanText,
         answer: `[ERROR_FALLBACK] ${error?.message || "Failed to reach backend services"}`,
-        source: "System Fallback",
+        source: "System Fallback (Failover from Connection Failure)",
         responseTimeMs: responseTime,
         tokenUsage: null
       });
@@ -2804,6 +2873,49 @@ export default function AIChatBot() {
       emailOrPhone: briefData.emailOrPhone,
     });
     setUserLead(savedLead);
+
+    // Add structured Project Brief summary to chat timeline so the user and AI bot are fully synchronized
+    const userBriefMessage: Message = {
+      id: "brief_user_" + Date.now(),
+      role: "user",
+      content: `📋 **[PROJECT BRIEF SUBMITTED]**\n• **Project Category:** ${briefData.projectType}\n• **Estimated Budget:** ${briefData.budget}\n• **Timeline:** ${briefData.timeline}${briefData.notes ? `\n• **Scope & Notes:** ${briefData.notes}` : ""}\n• **Client:** ${briefData.name} (${briefData.emailOrPhone})`,
+      timestamp: new Date(),
+      briefSummary: {
+        name: briefData.name,
+        emailOrPhone: briefData.emailOrPhone,
+        projectType: briefData.projectType,
+        budget: briefData.budget,
+        timeline: briefData.timeline,
+        notes: briefData.notes,
+        submittedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    };
+
+    const verifiedPhone = portfolioData?.personalInfo?.phone || "+8801932623969";
+    const cleanWaNum = verifiedPhone.replace(/\D/g, "");
+
+    const botAckMessage: Message = {
+      id: "brief_bot_" + (Date.now() + 1),
+      role: "model",
+      content: `✨ **Thank you, ${briefData.name}! Brief received.**\n\n🎯 **${briefData.projectType}**  ·  💰 **${briefData.budget}**  ·  ⏱ **${briefData.timeline}**\n\nRashed will follow up shortly at **${briefData.emailOrPhone}**. You can also connect directly on WhatsApp below! 👇`,
+      timestamp: new Date(),
+      actions: [
+        {
+          label: "Chat Directly on WhatsApp",
+          type: "whatsapp",
+          url: `https://wa.me/${cleanWaNum}?text=${encodeURIComponent(buildBriefWhatsAppMessage(briefData))}`,
+          primary: true,
+        },
+      ],
+    };
+
+    setMessages((prev) => {
+      const updated = [...prev, userBriefMessage, botAckMessage];
+      try {
+        localStorage.setItem("portfolio_chat_messages", JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
 
     logInteraction({
       question: `[PROJECT BRIEF SUBMITTED] ${briefData.name} - ${briefData.projectType}`,
@@ -3126,6 +3238,7 @@ export default function AIChatBot() {
                     onClose={() => setIsBriefSheetOpen(false)}
                     onSubmitBrief={handleSubmitLeadBrief}
                     briefSettings={chatbotSettings?.projectBriefSettings}
+                    verifiedPhone={portfolioData?.personalInfo?.phone || "+8801932623969"}
                   />
                 )}
               </AnimatePresence>
@@ -3178,18 +3291,87 @@ export default function AIChatBot() {
                     className={`flex flex-col scroll-mt-2 ${msg.role === "user" ? "items-end" : "items-start"}`}
                   >
                     <div
-                      className={`max-w-[88%] sm:max-w-[85%] rounded-2xl px-4 py-3 sm:py-2.5 text-[15px] sm:text-[14px] leading-relaxed tracking-normal ${
-                        msg.role === "user"
-                          ? isLight
-                            ? "chat-user-bubble bg-purple-100/90 border border-purple-200 text-purple-950 font-medium rounded-br-xs font-sans shadow-2xs"
-                            : "chat-user-bubble bg-purple-950/70 border border-purple-500/30 text-purple-100 rounded-br-xs font-sans shadow-2xs"
-                          : isLight
-                            ? "chat-bot-bubble bg-white/95 border border-zinc-200/80 text-zinc-900 rounded-bl-xs font-sans shadow-xs"
-                            : "chat-bot-bubble bg-[#13141f]/95 border border-white/10 text-zinc-100 rounded-bl-xs font-sans"
+                      className={`max-w-[92%] sm:max-w-[85%] text-[15px] sm:text-[14px] leading-relaxed tracking-normal ${
+                        msg.briefSummary
+                          ? "p-0 bg-transparent border-0 shadow-none"
+                          : `rounded-2xl px-4 py-3 sm:py-2.5 ${
+                              msg.role === "user"
+                                ? isLight
+                                  ? "chat-user-bubble bg-purple-100/90 border border-purple-200 text-purple-950 font-medium rounded-br-xs font-sans shadow-2xs"
+                                  : "chat-user-bubble bg-purple-950/70 border border-purple-500/30 text-purple-100 rounded-br-xs font-sans shadow-2xs"
+                                : isLight
+                                  ? "chat-bot-bubble bg-white/95 border border-zinc-200/80 text-zinc-900 rounded-bl-xs font-sans shadow-xs"
+                                  : "chat-bot-bubble bg-[#13141f]/95 border border-white/10 text-zinc-100 rounded-bl-xs font-sans"
+                            }`
                       }`}
                     >
-                      {/* Render formatted text */}
-                      {msg.role === "model" && (msg.id === "welcome" || msg.id.startsWith("welcome")) && isWelcomeThinking ? (
+                      {/* Render Project Brief Card OR formatted text */}
+                      {msg.briefSummary ? (
+                        <div className={`p-4 rounded-2xl rounded-br-xs border text-left space-y-3 font-sans min-w-[260px] sm:min-w-[300px] shadow-sm ${
+                          isLight
+                            ? "bg-purple-100/95 border-purple-300 text-purple-950"
+                            : "bg-purple-950/80 border-purple-500/40 text-purple-100"
+                        }`}>
+                          {/* Header */}
+                          <div className="flex items-center justify-between pb-2.5 border-b border-purple-500/20">
+                            <div className="flex items-center gap-2">
+                              <FileText className={`w-4 h-4 shrink-0 ${isLight ? "text-purple-700" : "text-purple-400"}`} />
+                              <span className="text-xs font-bold uppercase tracking-wider font-mono">
+                                Project Brief
+                              </span>
+                            </div>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono font-medium flex items-center gap-1">
+                              <Check className="w-2.5 h-2.5" /> Submitted
+                            </span>
+                          </div>
+
+                          {/* Digital Receipt Key-Value Rows (No text clipping) */}
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex items-center justify-between py-1 border-b border-purple-500/10">
+                              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">Category</span>
+                              <span className="font-semibold text-right">{msg.briefSummary.projectType}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1 border-b border-purple-500/10">
+                              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">Budget</span>
+                              <span className="font-semibold text-right text-emerald-400 font-mono">{msg.briefSummary.budget}</span>
+                            </div>
+                            <div className="flex items-start justify-between py-1 border-b border-purple-500/10 gap-3">
+                              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60 shrink-0">Timeline</span>
+                              <span className="font-semibold text-right break-words">{msg.briefSummary.timeline}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1 border-b border-purple-500/10">
+                              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">Contact</span>
+                              <span className="font-semibold text-right font-mono">{msg.briefSummary.emailOrPhone}</span>
+                            </div>
+                          </div>
+
+                          {/* Optional Scope Notes */}
+                          {msg.briefSummary.notes && (
+                            <div className="pt-1 text-xs">
+                              <span className="text-[10px] uppercase font-mono tracking-wider opacity-60 block mb-1">
+                                Scope & Deliverables
+                              </span>
+                              <p className="text-xs leading-relaxed bg-black/10 dark:bg-black/30 p-2.5 rounded-lg border border-purple-500/15 italic break-words">
+                                "{msg.briefSummary.notes}"
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Full-Width Prominent WhatsApp Action */}
+                          <div className="pt-1">
+                            <a
+                              href={`https://wa.me/${(portfolioData?.personalInfo?.phone || "+8801932623969").replace(/\D/g, "")}?text=${encodeURIComponent(buildBriefWhatsAppMessage(msg.briefSummary))}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all shadow-md active:scale-[0.98] cursor-pointer"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>Send via WhatsApp</span>
+                              <ExternalLink className="w-3 h-3 opacity-80" />
+                            </a>
+                          </div>
+                        </div>
+                      ) : msg.role === "model" && (msg.id === "welcome" || msg.id.startsWith("welcome")) && isWelcomeThinking ? (
                         <div className="flex items-center gap-2 py-1 px-1">
                           <span className="flex items-center gap-1.5" aria-hidden="true">
                             <span className="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.3s]" />
