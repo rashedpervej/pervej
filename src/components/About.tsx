@@ -72,6 +72,15 @@ export default function About() {
 
   const activeHighlights = rawHighlights.filter((h: any) => h.isVisible !== false).slice(0, 3);
 
+  const DEFAULT_LANGUAGES = [
+    "English — Professional proficiency for global teams",
+    "Bengali — Native Fluency"
+  ];
+  const languagesList: string[] = 
+    Array.isArray((info as any)?.languages) && (info as any).languages.length > 0
+      ? (info as any).languages
+      : DEFAULT_LANGUAGES;
+
   const gridLayoutClass =
     activeHighlights.length === 1
       ? "grid-cols-1 max-w-sm"
@@ -236,26 +245,23 @@ export default function About() {
                 </div>
 
                 {/* Languages Highlight */}
-                <div className={`pt-4 border-t ${isLight ? "border-zinc-200/80" : "border-white/5"}`}>
-                  <h5 className="font-mono text-[10px] uppercase tracking-widest text-zinc-400 mb-2">
-                    LANGUAGES &amp; PROFICIENCY
-                  </h5>
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className={`w-4 h-4 ${isLight ? "text-purple-600" : "text-purple-400"}`} />
-                    <span className={`font-sans text-xs ${isLight ? "text-zinc-700" : "text-zinc-300"}`}>
-                      English — Professional proficiency for global teams
-                    </span>
+                {languagesList.length > 0 && (
+                  <div className={`pt-4 border-t ${isLight ? "border-zinc-200/80" : "border-white/5"}`}>
+                    <h5 className="font-mono text-[10px] uppercase tracking-widest text-zinc-400 mb-2.5">
+                      LANGUAGES &amp; PROFICIENCY
+                    </h5>
+                    <div className="flex flex-col gap-2">
+                      {languagesList.map((langText: string, idx: number) => (
+                        <div key={idx} className="flex items-center gap-2.5">
+                          <CheckCircle2 className={`w-4 h-4 shrink-0 ${isLight ? "text-purple-600" : "text-purple-400"}`} />
+                          <span className={`font-sans text-xs ${isLight ? "text-zinc-700" : "text-zinc-300"}`}>
+                            {langText}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className={`w-4 h-4 ${isLight ? "text-purple-600" : "text-purple-400"}`} />
-                    <span className={`font-sans text-xs ${isLight ? "text-zinc-700" : "text-zinc-300"}`}>
-                      Bengali — Native Fluance
-                    </span>
-                  </div>
-                  
-                  
-                </div>
+                )}
               </div>
             </motion.div>
           )}
